@@ -77,7 +77,8 @@ func testLatency(domain string, timeout time.Duration) (time.Duration, string, e
 }
 
 func testDownload(domain string, timeout time.Duration) (float64, error) {
-	url := fmt.Sprintf("https://%s/", domain)
+	// 使用 Cloudflare 测速文件，100MB
+	url := fmt.Sprintf("https://%s/__down?bytes=100000000", domain)
 
 	client := &http.Client{
 		Timeout: timeout,
