@@ -1,0 +1,34 @@
+name: Build Binary
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cfst-server/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build Linux binary
+        working-directory: ./cfst-server
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cfst-server-linux-amd64 .
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o cfst-server-linux-arm64 .
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cfst-server-binaries
+          path: |
+            cfst-server/cfst-server-linux-amd64
+            cfst-server/cfst-server-linux-arm64
