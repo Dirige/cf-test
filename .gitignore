@@ -1,0 +1,28 @@
+# Wrangler
+worker/.wrangler/
+
+# Binaries (note: cfst-server.exe is compiled binary, cfst-server/ is the project dir)
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Dependencies
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp

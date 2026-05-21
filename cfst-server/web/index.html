@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CFST 域名测速工具</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:24px;margin:20px 0;color:#38bdf8}
+.card{background:#1e293b;border-radius:12px;padding:20px;margin-bottom:16px}
+.card h2{font-size:16px;color:#94a3b8;margin-bottom:12px;border-bottom:1px solid #334155;padding-bottom:8px}
+.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #334155}
+.info-row:last-child{border-bottom:none}
+.label{color:#94a3b8}
+.value{color:#e2e8f0;font-weight:500}
+.best-domain{font-size:20px;color:#22c55e;font-weight:bold}
+.best-speed{font-size:14px;color:#94a3b8}
+.btn{display:inline-block;padding:10px 24px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.btn-primary{background:#3b82f6;color:white}
+.btn-primary:hover{background:#2563eb}
+.btn-primary:disabled{background:#475569;cursor:not-allowed}
+.btn-danger{background:#ef4444;color:white}
+.btn-danger:hover{background:#dc2626}
+.domain-list{list-style:none}
+.domain-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #334155}
+.domain-item:last-child{border-bottom:none}
+.domain-name{color:#38bdf8;font-size:13px}
+.domain-url{color:#e2e8f0}
+.add-form{display:flex;gap:8px;margin-top:12px}
+.add-form input{flex:1;padding:8px 12px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px}
+.results-table{width:100%;border-collapse:collapse;margin-top:12px}
+.results-table th{background:#334155;color:#38bdf8;padding:10px;text-align:left;font-size:13px}
+.results-table td{padding:10px;border-bottom:1px solid #334155;font-size:13px}
+.speed-fast{color:#22c55e}
+.speed-medium{color:#f59e0b}
+.speed-slow{color:#ef4444}
+.status{text-align:center;padding:20px;color:#64748b}
+.disclaimer{background:#1e293b;border:2px solid #f59e0b;border-radius:12px;padding:20px;margin-top:20px;text-align:center}
+.disclaimer p{font-size:16px;font-weight:bold;color:#f59e0b;line-height:1.8}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🌐 CFST 域名测速工具</h1>
+
+<div class="card">
+<h2>📍 当前信息</h2>
+<div id="geoInfo" class="status">加载中...</div>
+</div>
+
+<div class="card">
+<h2>⚡ 测速控制</h2>
+<div style="text-align:center">
+<button id="btnTest" class="btn btn-primary" onclick="startTest()">开始测速</button>
+</div>
+<div id="testStatus" class="status" style="display:none"></div>
+</div>
+
+<div class="card" id="bestCard" style="display:none">
+<h2>🏆 当前最佳结果</h2>
+<div id="bestResult"></div>
+</div>
+
+<div class="card">
+<h2>📋 测速详情</h2>
+<div id="testResults" class="status">尚未测速</div>
+</div>
+
+<div class="card">
+<h2>🔗 DNS 记录</h2>
+<div id="dnsInfo" class="status">加载中...</div>
+</div>
+
+<div class="card">
+<h2>📝 域名列表</h2>
+<div id="domainList" class="status">加载中...</div>
+<div class="add-form">
+<input type="text" id="inputName" placeholder="名称">
+<input type="text" id="inputDomain" placeholder="域名">
+<button class="btn btn-primary" onclick="addDomain()">添加</button>
+</div>
+</div>
+
+<div class="disclaimer">
+<p>⚠️ 共享计划声明</p>
+<p>本项目为共享测速计划，所有用户的测速结果将同步至共享数据库。</p>
+<p>您的测速数据将被汇总展示，帮助其他用户选择最优域名。</p>
+<p style="font-size:14px;color:#94a3b8;margin-top:10px">如不同意数据共享，请删除本程序。</p>
+</div>
+</div>
+
+<script>
+async function loadGeoInfo(){
+try{
+const res=await fetch('/api/geoip');
+const json=await res.json();
+if(json.success){
+const d=json.data;
+document.getElementById('geoInfo').innerHTML=
+'<div class="info-row"><span class="label">IP</span><span class="value">'+d.IP+'</span></div>'+
+'<div class="info-row"><span class="label">位置</span><span class="value">'+d.Province+' - '+d.City+'</span></div>'+
+'<div class="info-row"><span class="label">运营商</span><span class="value">'+d.ISP+' ('+d.ISPTag+')</span></div>';
+}
+}catch(e){document.getElementById('geoInfo').innerHTML='<span style="color:#ef4444">获取失败</span>'}
+}
+
+async function loadDomains(){
+try{
+const res=await fetch('/api/domains');
+const json=await res.json();
+if(json.success){
+const list=document.getElementById('domainList');
+if(json.data.length===0){list.innerHTML='<div class="status">暂无域名</div>';return}
+list.innerHTML='<ul class="domain-list">'+
+json.data.map(d=>'<li class="domain-item"><div><div class="domain-name">'+d.name+'</div><div class="domain-url">'+d.domain+'</div></div>'+(d.is_builtin?'<span style="color:#64748b">内置</span>':'<button class="btn btn-danger" onclick="deleteDomain(\''+d.domain+'\')">删除</button>')+'</li>').join('')+
+'</ul>';
+}
+}catch(e){document.getElementById('domainList').innerHTML='<span style="color:#ef4444">加载失败</span>'}
+}
+
+async function loadDNS(){
+try{
+const res=await fetch('/api/dns');
+const json=await res.json();
+if(json.success){
+const d=json.data;
+const r=d.record;
+if(r){
+document.getElementById('dnsInfo').innerHTML=
+'<div class="info-row"><span class="label">记录名</span><span class="value">'+d.record_name+'</span></div>'+
+'<div class="info-row"><span class="label">类型</span><span class="value">'+d.record_type+'</span></div>'+
+'<div class="info-row"><span class="label">指向</span><span class="value" style="color:#22c55e">'+r.content+'</span></div>';
+}else{
+document.getElementById('dnsInfo').innerHTML=
+'<div class="info-row"><span class="label">记录名</span><span class="value">'+d.record_name+'</span></div>'+
+'<div class="info-row"><span class="label">状态</span><span class="value" style="color:#f59e0b">未找到记录</span></div>';
+}
+}
+}catch(e){document.getElementById('dnsInfo').innerHTML='<span style="color:#ef4444">加载失败</span>'}
+}
+
+async function startTest(){
+const btn=document.getElementById('btnTest');
+const status=document.getElementById('testStatus');
+btn.disabled=true;
+btn.innerHTML='<span class="spinner"></span>测速中...';
+status.style.display='block';
+status.innerHTML='正在测速，请稍候...';
+
+try{
+const res=await fetch('/api/speedtest',{method:'POST'});
+const json=await res.json();
+if(json.success){
+const d=json.data;
+status.innerHTML='测速完成！';
+
+if(d.best_result){
+document.getElementById('bestCard').style.display='block';
+document.getElementById('bestResult').innerHTML=
+'<div class="best-domain">'+d.best_result.domain_name+'</div>'+
+'<div class="best-speed">'+d.best_result.domain+' - '+d.best_result.download_speed.toFixed(2)+' MB/s</div>';
+}
+
+const table='<table class="results-table"><thead><tr><th>域名</th><th>延迟</th><th>速度</th><th>状态</th></tr></thead><tbody>'+
+d.results.map(r=>{
+const speedClass=r.download_speed>10?'speed-fast':r.download_speed>2?'speed-medium':'speed-slow';
+return'<tr><td>'+r.domain_name+'</td><td>'+r.latency.toFixed(0)+'ms</td><td class="'+speedClass+'">'+r.download_speed.toFixed(2)+' MB/s</td><td>'+(r.success?'✅':'❌ '+r.error)+'</td></tr>';
+}).join('')+
+'</tbody></table>';
+document.getElementById('testResults').innerHTML=table;
+
+loadDNS();
+}else{
+status.innerHTML='<span style="color:#ef4444">测速失败: '+json.error+'</span>';
+}
+}catch(e){
+status.innerHTML='<span style="color:#ef4444">请求失败</span>';
+}finally{
+btn.disabled=false;
+btn.innerHTML='开始测速';
+}
+}
+
+async function addDomain(){
+const name=document.getElementById('inputName').value;
+const domain=document.getElementById('inputDomain').value;
+if(!domain){alert('请输入域名');return}
+
+try{
+const res=await fetch('/api/domains',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,domain})});
+const json=await res.json();
+if(json.success){
+document.getElementById('inputName').value='';
+document.getElementById('inputDomain').value='';
+loadDomains();
+}else{alert('添加失败: '+json.error)}
+}catch(e){alert('请求失败')}
+}
+
+async function deleteDomain(domain){
+if(!confirm('确定删除 '+domain+' ?'))return;
+try{
+const res=await fetch('/api/domains/'+encodeURIComponent(domain),{method:'DELETE'});
+const json=await res.json();
+if(json.success){loadDomains()}else{alert('删除失败: '+json.error)}
+}catch(e){alert('请求失败')}
+}
+
+loadGeoInfo();
+loadDomains();
+loadDNS();
+</script>
+</body>
+</html>

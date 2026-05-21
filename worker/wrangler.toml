@@ -1,0 +1,9 @@
+name = "cf-test"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+account_id = "3b64ad027d577dd839b68afa978442b9"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cf-test"
+database_id = "0f0f6c6d-48e7-48b3-99ce-d84c754e7e69"
