@@ -20,33 +20,106 @@ type IPInfo struct {
 }
 
 var ispKeywords = map[string][]string{
-	"telecom": {"ChinaTelecom", "China Telecom", "Chinanet", "AS4134", "AS4809"},
-	"unicom":  {"ChinaUnicom", "China Unicom", "AS4837", "AS9929", "AS10099"},
-	"mobile":  {"ChinaMobile", "China Mobile", "CMNET", "AS56040", "AS9808"},
+	"telecom": {"ChinaTelecom", "China Telecom", "Chinanet", "AS4134", "AS4809", "电信", "telecom"},
+	"unicom":  {"ChinaUnicom", "China Unicom", "AS4837", "AS9929", "AS10099", "联通", "unicom"},
+	"mobile":  {"ChinaMobile", "China Mobile", "CMNET", "AS56040", "AS9808", "移动", "mobile"},
+}
+
+type pconlineResp struct {
+	IP    string `json:"ip"`
+	Pro   string `json:"pro"`
+	City  string `json:"city"`
+	Addr  string `json:"addr"`
+	Region string `json:"region"`
+}
+
+type ipApiResp struct {
+	Query      string `json:"query"`
+	Country    string `json:"country"`
+	RegionName string `json:"regionName"`
+	City       string `json:"city"`
+	ISP        string `json:"isp"`
+	AS         string `json:"as"`
 }
 
 func GetIPInfo(ip string) (*IPInfo, error) {
-	url := fmt.Sprintf("http://ip-api.com/json/%s?lang=zh-CN&fields=query,country,regionName,city,isp,as", ip)
-	if ip == "" {
-		url = "http://ip-api.com/json/?lang=zh-CN&fields=query,country,regionName,city,isp,as"
+	if info, err := getPconlineInfo(ip); err == nil {
+		return info, nil
+	}
+
+	return getIpApiInfo(ip)
+}
+
+func getPconlineInfo(ip string) (*IPInfo, error) {
+	url := "http://whois.pconline.com.cn/ipJson.jsp?json=true"
+	if ip != "" {
+		url = fmt.Sprintf("http://whois.pconline.com.cn/ipJson.jsp?ip=%s&json=true", ip)
 	}
 
 	client := &http.Client{Timeout: 5 * time.Second}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var pco pconlineResp
+	if err := json.NewDecoder(resp.Body).Decode(&pco); err != nil {
+		return nil, err
+	}
+
+	info := &IPInfo{
+		IP:      pco.IP,
+		Country: "中国",
+		Region:  pco.Pro,
+		City:    pco.City,
+		ISP:     pco.Addr,
+		AS:      "",
+	}
+
+	info.Province = normalizeProvince(pco.Pro)
+	info.ISPTag = classifyISP(pco.Addr)
+
+	return info, nil
+}
+
+func getIpApiInfo(ip string) (*IPInfo, error) {
+	url := "http://ip-api.com/json/?lang=zh-CN&fields=query,country,regionName,city,isp,as"
+	if ip != "" {
+		url = fmt.Sprintf("http://ip-api.com/json/%s?lang=zh-CN&fields=query,country,regionName,city,isp,as", ip)
+	}
+
+	client := &http.Client{Timeout: 8 * time.Second}
 	resp, err := client.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	var info IPInfo
-	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
+	var apiResp ipApiResp
+	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, err
+	}
+
+	info := &IPInfo{
+		IP:      apiResp.Query,
+		Country: apiResp.Country,
+		Region:  apiResp.RegionName,
+		City:    apiResp.City,
+		ISP:     apiResp.ISP,
+		AS:      apiResp.AS,
 	}
 
 	info.Province = normalizeProvince(info.Region)
 	info.ISPTag = classifyISP(info.ISP + " " + info.AS)
 
-	return &info, nil
+	return info, nil
 }
 
 func normalizeProvince(region string) string {
