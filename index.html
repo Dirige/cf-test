@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CFST 优选测速</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-base:#06080f;
+  --bg-surface:#0c1019;
+  --bg-elevated:#111623;
+  --bg-card:rgba(14,20,35,0.75);
+  --bg-input:rgba(8,12,22,0.7);
+  --border:rgba(56,189,248,0.08);
+  --border-focus:rgba(56,189,248,0.35);
+  --text-primary:#e8edf5;
+  --text-secondary:#8b95a8;
+  --text-muted:#505a6e;
+  --cyan:#38bdf8;
+  --cyan-deep:#0ea5e9;
+  --green:#34d399;
+  --green-deep:#059669;
+  --amber:#fbbf24;
+  --red:#f87171;
+  --purple:#a78bfa;
+  --purple-deep:#7c3aed;
+  --rose:#fb7185;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:0 4px 16px rgba(0,0,0,0.4),0 0 0 1px rgba(56,189,248,0.04);
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.5),0 0 0 1px rgba(56,189,248,0.06);
+  --shadow-glow:0 0 20px rgba(56,189,248,0.15);
+  --radius:14px;
+  --radius-sm:10px;
+  --radius-xs:6px;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg-base);
+  color:var(--text-primary);
+  min-height:100vh;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 90% 50% at 50% -15%,rgba(56,189,248,0.06),transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% 55%,rgba(124,58,237,0.04),transparent 70%),
+    radial-gradient(ellipse 50% 40% at 15% 75%,rgba(5,150,105,0.03),transparent 70%);
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    radial-gradient(rgba(56,189,248,0.03) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+.app{max-width:920px;margin:0 auto;padding:20px 16px 40px;position:relative;z-index:1}
+
+.header{text-align:center;padding:36px 0 28px}
+.header-inner{
+  display:inline-flex;flex-direction:column;align-items:center;gap:6px;
+}
+.logo{
+  display:flex;align-items:center;gap:10px;margin-bottom:4px;
+}
+.logo-icon{
+  width:36px;height:36px;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 20px rgba(56,189,248,0.2);
+}
+.logo-icon svg{width:20px;height:20px;fill:white}
+.header h1{
+  font-size:30px;font-weight:800;letter-spacing:-0.5px;
+  background:linear-gradient(135deg,var(--cyan) 0%,var(--purple) 50%,var(--green) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.header .subtitle{
+  font-size:13px;color:var(--text-muted);letter-spacing:2px;
+  text-transform:uppercase;font-weight:500;
+}
+.divider{
+  width:48px;height:2px;margin:14px auto 0;
+  background:linear-gradient(90deg,transparent,var(--cyan),var(--purple),transparent);
+  border-radius:1px;
+}
+
+.card{
+  background:var(--bg-card);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px 22px;
+  margin-bottom:14px;
+  box-shadow:var(--shadow-md);
+  transition:border-color 0.3s,box-shadow 0.3s;
+  animation:cardIn 0.5s ease both;
+}
+.card:hover{border-color:rgba(56,189,248,0.12);box-shadow:var(--shadow-lg)}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.card:nth-child(2){animation-delay:0.04s}
+.card:nth-child(3){animation-delay:0.08s}
+.card:nth-child(4){animation-delay:0.12s}
+.card:nth-child(5){animation-delay:0.16s}
+.card:nth-child(6){animation-delay:0.2s}
+.card:nth-child(7){animation-delay:0.24s}
+.card:nth-child(8){animation-delay:0.28s}
+
+.card-title{
+  font-size:13px;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:1.5px;
+  margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.card-title .icon{
+  width:18px;height:18px;display:flex;align-items:center;justify-content:center;
+  opacity:0.6;
+}
+.card-title .icon svg{width:14px;height:14px;stroke:var(--cyan);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.info-cell{
+  background:var(--bg-elevated);padding:14px 16px;
+  display:flex;flex-direction:column;gap:4px;
+}
+.info-cell .label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;font-weight:600}
+.info-cell .val{font-size:16px;font-weight:600;color:var(--text-primary);font-variant-numeric:tabular-nums;word-break:break-all}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:13px;color:var(--text-muted);font-weight:600;letter-spacing:0.4px}
+.form-group input,.form-group select{
+  padding:10px 14px;
+  background:var(--bg-input);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xs);
+  color:var(--text-primary);font-size:15px;
+  font-family:inherit;
+  transition:all 0.2s;
+  outline:none;
+}
+.form-group input:focus,.form-group select:focus{
+  border-color:var(--border-focus);
+  box-shadow:0 0 0 3px rgba(56,189,248,0.08);
+}
+.form-group input::placeholder{color:var(--text-muted)}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 20px;border:none;border-radius:var(--radius-xs);
+  font-size:14px;font-weight:600;cursor:pointer;
+  transition:all 0.2s ease;
+  font-family:inherit;letter-spacing:0.3px;
+  position:relative;overflow:hidden;
+}
+.btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,0.06),transparent 60%);
+  pointer-events:none;
+}
+.btn:active{transform:scale(0.97)}
+.btn-cyan{
+  background:linear-gradient(135deg,var(--cyan-deep),var(--cyan));
+  color:#fff;box-shadow:0 2px 10px rgba(14,165,233,0.25);
+}
+.btn-cyan:hover{box-shadow:0 4px 16px rgba(14,165,233,0.4);transform:translateY(-1px)}
+.btn-cyan:disabled{background:#1a2030;color:var(--text-muted);cursor:not-allowed;box-shadow:none;transform:none}
+.btn-green{
+  background:linear-gradient(135deg,var(--green-deep),var(--green));
+  color:#fff;box-shadow:0 2px 10px rgba(5,150,105,0.25);
+}
+.btn-green:hover{box-shadow:0 4px 16px rgba(5,150,105,0.4);transform:translateY(-1px)}
+.btn-green:disabled{background:#1a2030;color:var(--text-muted);cursor:not-allowed;box-shadow:none;transform:none}
+.btn-amber{
+  background:linear-gradient(135deg,#d97706,var(--amber));
+  color:#1a1a1a;box-shadow:0 2px 10px rgba(217,119,6,0.25);
+}
+.btn-amber:hover{box-shadow:0 4px 16px rgba(217,119,6,0.4);transform:translateY(-1px)}
+.btn-red{
+  background:linear-gradient(135deg,#dc2626,var(--red));
+  color:#fff;box-shadow:0 2px 10px rgba(220,38,38,0.2);
+}
+.btn-red:hover{box-shadow:0 4px 16px rgba(220,38,38,0.35);transform:translateY(-1px)}
+.btn-rose{
+  background:linear-gradient(135deg,#e11d48,var(--rose));
+  color:#fff;box-shadow:0 2px 10px rgba(225,29,72,0.2);
+}
+.btn-rose:hover{box-shadow:0 4px 16px rgba(225,29,72,0.35);transform:translateY(-1px)}
+.btn-ghost{
+  background:rgba(148,163,184,0.06);color:var(--text-secondary);
+  border:1px solid var(--border);
+}
+.btn-ghost:hover{background:rgba(148,163,184,0.1);color:var(--text-primary)}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:5px}
+.btn-icon{
+  width:32px;height:32px;padding:0;border-radius:var(--radius-xs);
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+.test-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:4px 0}
+.test-btns .btn{min-width:180px;padding:14px 28px;font-size:15px;border-radius:var(--radius-sm)}
+
+.status-box{
+  text-align:center;padding:16px;color:var(--text-muted);font-size:15px;
+}
+.spinner{
+  display:inline-block;width:14px;height:14px;
+  border:2px solid rgba(56,189,248,0.15);
+  border-top-color:var(--cyan);
+  border-radius:50%;
+  animation:spin 0.6s linear infinite;
+  margin-right:6px;vertical-align:middle;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.progress-detail{
+  margin-top:14px;
+  background:rgba(8,12,22,0.5);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:16px 18px;
+  text-align:left;
+}
+.progress-detail .pd-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;
+}
+.progress-detail .pd-phase{
+  font-size:13px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;
+}
+.pd-phase-v4{color:var(--cyan)}
+.pd-phase-v6{color:var(--purple)}
+.progress-detail .pd-counter{
+  font-size:14px;color:var(--text-secondary);
+  font-variant-numeric:tabular-nums;
+}
+.progress-detail .pd-counter strong{
+  color:var(--text-primary);font-weight:700;
+}
+.progress-detail .pd-bar-wrap{
+  width:100%;height:4px;background:rgba(148,163,184,0.08);
+  border-radius:2px;overflow:hidden;margin-bottom:14px;
+}
+.progress-detail .pd-bar-fill{
+  height:100%;border-radius:2px;
+  background:linear-gradient(90deg,var(--cyan),var(--purple));
+  transition:width 0.5s ease;
+}
+.progress-detail .pd-stats{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
+}
+.progress-detail .pd-stat{
+  background:rgba(14,20,35,0.6);
+  border:1px solid rgba(56,189,248,0.05);
+  border-radius:var(--radius-xs);
+  padding:10px 12px;
+  display:flex;flex-direction:column;gap:3px;
+}
+.progress-detail .pd-stat .pd-label{
+  font-size:11px;color:var(--text-muted);text-transform:uppercase;
+  letter-spacing:0.6px;font-weight:600;
+}
+.progress-detail .pd-stat .pd-val{
+  font-size:16px;font-weight:700;color:var(--text-primary);
+  font-family:'JetBrains Mono',monospace;
+  font-variant-numeric:tabular-nums;
+}
+.pd-val-speed{color:var(--green)!important}
+.pd-val-latency{color:var(--amber)!important}
+.progress-detail .pd-ip-row{
+  margin-top:10px;
+  display:flex;align-items:center;gap:8px;
+  padding:8px 12px;
+  background:rgba(14,20,35,0.6);
+  border:1px solid rgba(56,189,248,0.05);
+  border-radius:var(--radius-xs);
+}
+.progress-detail .pd-ip-row .pd-label{
+  font-size:11px;color:var(--text-muted);text-transform:uppercase;
+  letter-spacing:0.6px;font-weight:600;white-space:nowrap;
+}
+.progress-detail .pd-ip-row .pd-val{
+  font-size:15px;font-weight:600;color:var(--cyan);
+  font-family:'JetBrains Mono',monospace;
+  word-break:break-all;
+}
+.progress-detail .pd-found{
+  margin-top:10px;
+  text-align:center;
+  font-size:13px;color:var(--text-muted);
+}
+.progress-detail .pd-found strong{
+  color:var(--green);font-weight:700;
+}
+
+.best-card{
+  background:linear-gradient(135deg,rgba(52,211,153,0.06),rgba(56,189,248,0.04));
+  border:1px solid rgba(52,211,153,0.15);
+  border-radius:var(--radius-sm);
+  padding:16px 18px;margin-top:14px;
+  position:relative;overflow:hidden;
+}
+.best-card::before{
+  content:'';position:absolute;top:0;left:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--green),var(--cyan));
+}
+.best-card .best-label{
+  font-size:12px;color:var(--green);font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;
+}
+.best-card .best-ip{
+  font-size:20px;font-weight:800;color:var(--text-primary);
+  font-family:'JetBrains Mono',monospace;letter-spacing:-0.3px;
+}
+.best-card .best-meta{
+  font-size:13px;color:var(--text-secondary);margin-top:4px;
+  font-variant-numeric:tabular-nums;
+}
+.best-card+.best-card{margin-top:10px;border-color:rgba(167,139,250,0.15)}
+.best-card+.best-card::before{background:linear-gradient(180deg,var(--purple),var(--cyan))}
+.best-card+.best-card .best-label{color:var(--purple)}
+
+.table-wrap{overflow-x:auto;margin:-4px}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
+thead th{
+  background:rgba(56,189,248,0.04);
+  color:var(--text-muted);padding:12px 12px;
+  text-align:left;font-size:12px;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.8px;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:1;
+  white-space:nowrap;
+}
+thead th:first-child{border-radius:var(--radius-xs) 0 0 0}
+thead th:last-child{border-radius:0 var(--radius-xs) 0 0}
+tbody td{
+  padding:10px 12px;
+  border-bottom:1px solid rgba(148,163,184,0.04);
+  transition:background 0.15s;
+  white-space:nowrap;
+}
+tbody tr:hover td{background:rgba(56,189,248,0.03)}
+tbody tr:last-child td{border-bottom:none}
+td.mono{font-family:'JetBrains Mono',monospace;font-size:13px}
+
+.speed-fast{color:var(--green);font-weight:700}
+.speed-mid{color:var(--amber);font-weight:700}
+.speed-slow{color:var(--red);font-weight:700}
+
+.tag{
+  display:inline-flex;align-items:center;padding:3px 10px;
+  border-radius:4px;font-size:11px;font-weight:700;
+  letter-spacing:0.5px;line-height:1.4;
+}
+.tag-v4{background:rgba(56,189,248,0.1);color:var(--cyan);border:1px solid rgba(56,189,248,0.15)}
+.tag-v6{background:rgba(167,139,250,0.1);color:var(--purple);border:1px solid rgba(167,139,250,0.15)}
+.tag-builtin{background:rgba(52,211,153,0.08);color:var(--green);border:1px solid rgba(52,211,153,0.12)}
+.tag-custom{background:rgba(251,191,36,0.08);color:var(--amber);border:1px solid rgba(251,191,36,0.12)}
+.tag-cname{background:rgba(251,113,133,0.1);color:var(--rose);border:1px solid rgba(251,113,133,0.15)}
+
+.tabs{
+  display:inline-flex;gap:0;background:rgba(8,12,22,0.5);
+  border-radius:8px;padding:3px;border:1px solid var(--border);
+}
+.tab{
+  padding:8px 20px;background:transparent;color:var(--text-muted);
+  cursor:pointer;font-size:14px;font-weight:600;
+  border:none;border-radius:6px;transition:all 0.2s;
+  font-family:inherit;
+}
+.tab.active{
+  background:linear-gradient(135deg,var(--cyan-deep),var(--cyan));
+  color:#fff;box-shadow:0 2px 8px rgba(14,165,233,0.25);
+}
+.tab:hover:not(.active){color:var(--text-secondary);background:rgba(148,163,184,0.05)}
+
+.empty{
+  text-align:center;padding:28px 16px;color:var(--text-muted);font-size:14px;
+}
+.empty svg{width:32px;height:32px;stroke:var(--text-muted);opacity:0.3;margin-bottom:8px;stroke-width:1.5;fill:none}
+
+.domain-add{display:flex;gap:8px;margin-top:14px}
+.domain-add input{
+  flex:1;padding:10px 14px;
+  background:var(--bg-input);border:1px solid var(--border);
+  border-radius:var(--radius-xs);color:var(--text-primary);font-size:15px;
+  font-family:inherit;transition:all 0.2s;outline:none;
+}
+.domain-add input:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px rgba(56,189,248,0.08)}
+.domain-add input::placeholder{color:var(--text-muted)}
+
+.dns-actions{
+  display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
+  margin-top:16px;padding-top:14px;
+  border-top:1px solid rgba(148,163,184,0.06);
+}
+.cname-row{
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  margin-top:10px;width:100%;justify-content:center;
+}
+.cname-select{
+  padding:8px 14px;background:var(--bg-input);
+  border:1px solid var(--border);border-radius:var(--radius-xs);
+  color:var(--text-primary);font-size:14px;font-family:inherit;
+  outline:none;min-width:200px;max-width:320px;
+  transition:all 0.2s;
+}
+.cname-select:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px rgba(56,189,248,0.08)}
+
+.section-footer{
+  display:flex;justify-content:flex-end;margin-top:12px;
+  padding-top:10px;border-top:1px solid rgba(148,163,184,0.05);
+}
+
+.toast{
+  position:fixed;top:20px;right:20px;z-index:9999;
+  padding:14px 20px;border-radius:var(--radius-sm);
+  font-size:15px;font-weight:500;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  transform:translateX(120%);transition:transform 0.3s ease;
+  max-width:360px;
+}
+.toast.show{transform:translateX(0)}
+.toast-success{background:rgba(5,150,105,0.95);color:#fff;border:1px solid rgba(52,211,153,0.3)}
+.toast-error{background:rgba(220,38,38,0.95);color:#fff;border:1px solid rgba(248,113,113,0.3)}
+.toast-info{background:rgba(14,165,233,0.95);color:#fff;border:1px solid rgba(56,189,248,0.3)}
+
+.modal-mask{
+  position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  backdrop-filter:blur(4px);z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.2s;
+}
+.modal-mask.show{opacity:1;pointer-events:auto}
+.modal{
+  background:var(--bg-elevated);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px;
+  max-width:400px;width:90%;box-shadow:var(--shadow-lg);
+  transform:scale(0.95);transition:transform 0.2s;
+}
+.modal-mask.show .modal{transform:scale(1)}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:12px;color:var(--text-primary)}
+.modal p{font-size:15px;color:var(--text-secondary);margin-bottom:18px;line-height:1.6}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+
+.rank-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:6px;font-size:12px;font-weight:800;
+}
+.rank-1{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1a1a1a}
+.rank-2{background:linear-gradient(135deg,#94a3b8,#64748b);color:#fff}
+.rank-3{background:linear-gradient(135deg,#d97706,#b45309);color:#fff}
+
+@media(max-width:640px){
+  .app{padding:12px 10px 32px}
+  .header{padding:24px 0 20px}
+  .header h1{font-size:24px}
+  .form-grid{grid-template-columns:1fr}
+  .test-btns{flex-direction:column}
+  .test-btns .btn{min-width:auto;width:100%;font-size:16px;padding:14px 20px}
+  .domain-add{flex-direction:column}
+  .info-grid{grid-template-columns:1fr}
+  .card{padding:16px}
+  table{font-size:13px}
+  thead th,tbody td{padding:8px 8px}
+  .modal{padding:18px}
+  .progress-detail .pd-stats{grid-template-columns:1fr 1fr 1fr;gap:6px}
+  .progress-detail .pd-stat{padding:8px 10px}
+  .progress-detail .pd-stat .pd-val{font-size:14px}
+  .progress-detail .pd-ip-row{flex-direction:column;align-items:flex-start;gap:2px}
+  .best-card .best-ip{font-size:16px}
+  .dns-actions{flex-direction:column;align-items:stretch}
+  .dns-actions .btn{width:100%}
+  .cname-row{flex-direction:column;align-items:stretch}
+  .cname-select{max-width:100%;width:100%}
+  .toast{right:10px;left:10px;max-width:none}
+}
+@media(max-width:400px){
+  .tabs{width:100%}
+  .tab{flex:1;text-align:center;padding:8px 10px;font-size:13px}
+}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(148,163,184,0.12);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(148,163,184,0.22)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <h1>CFST 优选测速</h1>
+    </div>
+    <div class="subtitle">Cloudflare IP 优选 &amp; DNS 管理</div>
+    <div class="divider"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">
+    <span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 000 20 14.5 14.5 0 000-20"/><path d="M2 12h20"/></svg></span>
+    当前网络信息
+  </div>
+  <div id="geoInfo">
+    <div class="info-grid">
+      <div class="info-cell"><span class="label">IP 地址</span><span class="val" id="geoIp">--</span></div>
+      <div class="info-cell"><span class="label">地理位置</span><span class="val" id="geoLoc">--</span></div>
+      <div class="info-cell"><span class="label">运营商</span><span class="val" id="geoIsp">--</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">
+    <span class="icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+    Cloudflare 设置
+  </div>
+  <div class="form-grid">
+    <div class="form-group"><label>API Token</label><input type="password" id="cfApiToken" placeholder="输入 Cloudflare API Token"></div>
+    <div class="form-group"><label>Zone ID</label><input type="text" id="cfZoneId" placeholder="Zone ID"></div>
+    <div class="form-group"><label>域名</label><input type="text" id="cfDomain" placeholder="example.com"></div>
+    <div class="form-group"><label>记录名</label><input type="text" id="cfRecordName" placeholder="@ 或 www" value="@"></div>
+    <div class="form-group"></div>
+  </div>
+  <div class="section-footer">
+    <button class="btn btn-cyan btn-sm" onclick="saveCFConfig()">
+      <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+      保存配置
+    </button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">
+    <span class="icon"><svg viewBox="0 0 24 24"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg></span>
+    测速控制
+  </div>
+  <div class="test-btns">
+    <button id="btnIPTest" class="btn btn-cyan" onclick="startIPTest()">
+      <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      IP 测速模式
+    </button>
+    <button id="btnDomainTest" class="btn btn-green" onclick="startDomainTest()">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+      域名测速模式
+    </button>
+  </div>
+  <div id="testStatus" class="status-box" style="display:none"></div>
+  <div id="bestResult"></div>
+</div>
+
+<div class="card">
+  <div class="card-title">
+    <span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>
+    优选域名列表
+  </div>
+  <div id="domainList" class="status-box">加载中...</div>
+  <div class="domain-add">
+    <input type="text" id="inputName" placeholder="备注名称">
+    <input type="text" id="inputDomain" placeholder="域名 (如 cdn.example.com)">
+    <button class="btn btn-cyan btn-sm" onclick="addDomain()">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      添加
+    </button>
+  </div>
+</div>
+
+<div class="card" id="resultCard" style="display:none">
+  <div class="card-title">
+    <span class="icon"><svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></span>
+    测速结果
+  </div>
+  <div style="margin-bottom:14px">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(this,'ip')">IP 排名</button>
+      <button class="tab" onclick="switchTab(this,'domain')">域名统计</button>
+    </div>
+  </div>
+  <div id="ipResultTab"></div>
+  <div id="domainResultTab" style="display:none"></div>
+  <div class="dns-actions" id="dnsActions"></div>
+</div>
+
+<div class="card">
+  <div class="card-title">
+    <span class="icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+    DNS 记录管理
+  </div>
+  <div id="dnsInfo" class="status-box">加载中...</div>
+</div>
+
+</div>
+
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <h3 id="modalTitle">确认</h3>
+    <p id="modalMsg"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">取消</button>
+      <button class="btn btn-cyan btn-sm" id="modalOk" onclick="closeModal()">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let testResults=null;
+let pollTimer=null;
+let modalCb=null;
+let domainListData=[];
+
+function showToast(msg,type){
+  const t=document.getElementById('toast');
+  t.className='toast toast-'+(type||'info');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function showModal(title,msg,cb){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalMsg').textContent=msg;
+  modalCb=cb;
+  document.getElementById('modalMask').classList.add('show');
+}
+function closeModal(){
+  document.getElementById('modalMask').classList.remove('show');
+  if(modalCb){modalCb();modalCb=null}
+}
+document.getElementById('modalMask').addEventListener('click',function(e){
+  if(e.target===this)closeModal();
+});
+
+async function loadGeoInfo(){
+  try{
+    const res=await fetch('/api/geoip');
+    const json=await res.json();
+    if(json.success){
+      const d=json.data;
+      document.getElementById('geoIp').textContent=d.ip||'--';
+      document.getElementById('geoLoc').textContent=(d.province||'')+(d.city?' - '+d.city:'');
+      document.getElementById('geoIsp').textContent=d.isp||'--';
+    }
+  }catch(e){
+    document.getElementById('geoIp').textContent='获取失败';
+  }
+}
+
+async function loadDomains(){
+  try{
+    const res=await fetch('/api/domains');
+    const json=await res.json();
+    if(json.success){domainListData=json.data;renderDomainTable(json.data)}
+  }catch(e){
+    document.getElementById('domainList').innerHTML='<div class="empty"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><br>加载失败</div>';
+  }
+}
+
+function renderDomainTable(domains){
+  const el=document.getElementById('domainList');
+  if(!domains||!domains.length){
+    el.innerHTML='<div class="empty"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg><br>暂无域名，请在下方添加</div>';
+    return;
+  }
+  let html='<div class="table-wrap"><table><thead><tr><th>备注</th><th>域名</th><th>类型</th><th>操作</th></tr></thead><tbody>';
+  domains.forEach(d=>{
+    const tag=d.is_builtin?'<span class="tag tag-builtin">内置</span>':'<span class="tag tag-custom">自定义</span>';
+    const testBtn='<button class="btn btn-cyan btn-sm" onclick="testSingleDomain(\''+d.domain.replace(/'/g,"\\'")+'\',\''+(d.name||'').replace(/'/g,"\\'")+'\','+d.is_builtin+')" title="测速"><svg viewBox="0 0 24 24"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg></button>';
+    const editBtn='<button class="btn btn-ghost btn-sm" onclick="editDomain(\''+d.domain.replace(/'/g,"\\'")+'\',\''+(d.name||'').replace(/'/g,"\\'")+'\','+d.is_builtin+')" title="编辑"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+    const delBtn='<button class="btn btn-red btn-sm" onclick="deleteDomain(\''+d.domain.replace(/'/g,"\\'")+'\')" title="删除"><svg viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>';
+    html+='<tr><td>'+(d.name||'-')+'</td><td class="mono">'+d.domain+'</td><td>'+tag+'</td><td style="display:flex;gap:4px">'+testBtn+editBtn+delBtn+'</td></tr>';
+  });
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
+}
+
+async function loadCFConfig(){
+  try{
+    const res=await fetch('/api/dns/config');
+    const json=await res.json();
+    if(json.success&&json.data){
+      const d=json.data;
+      if(d.api_token)document.getElementById('cfApiToken').value=d.api_token;
+      if(d.zone_id)document.getElementById('cfZoneId').value=d.zone_id;
+      if(d.domain)document.getElementById('cfDomain').value=d.domain;
+      if(d.record_name)document.getElementById('cfRecordName').value=d.record_name;
+    }
+  }catch(e){}
+}
+
+async function saveCFConfig(){
+  const cfg={
+    api_token:document.getElementById('cfApiToken').value,
+    zone_id:document.getElementById('cfZoneId').value,
+    domain:document.getElementById('cfDomain').value,
+    record_name:document.getElementById('cfRecordName').value||'@'
+  };
+  try{
+    const res=await fetch('/api/dns/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
+    const json=await res.json();
+    if(json.success)showToast('配置已保存','success');
+    else showToast('保存失败: '+json.error,'error');
+  }catch(e){showToast('请求失败','error')}
+}
+
+async function loadDNS(){
+  try{
+    const res=await fetch('/api/dns/records');
+    const json=await res.json();
+    if(json.success)renderDNSRecords(json.data);
+    else document.getElementById('dnsInfo').innerHTML='<div class="empty">'+json.error+'</div>';
+  }catch(e){
+    document.getElementById('dnsInfo').innerHTML='<div class="empty">请先配置 Cloudflare API 信息</div>';
+  }
+}
+
+function renderDNSRecords(records){
+  const el=document.getElementById('dnsInfo');
+  if(!records||!records.length){
+    el.innerHTML='<div class="empty"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><br>暂无 DNS 记录</div>';
+    return;
+  }
+  let html='<div class="table-wrap"><table><thead><tr><th>类型</th><th>名称</th><th>指向</th><th>代理</th><th>操作</th></tr></thead><tbody>';
+  records.forEach(r=>{
+    let tt;
+    if(r.type==='A')tt='<span class="tag tag-v4">A</span>';
+    else if(r.type==='AAAA')tt='<span class="tag tag-v6">AAAA</span>';
+    else tt='<span class="tag tag-cname">CNAME</span>';
+    html+='<tr><td>'+tt+'</td><td>'+r.name+'</td><td class="mono" style="color:var(--green)">'+r.content+'</td><td>'+(r.proxied?'是':'否')+'</td><td><button class="btn btn-red btn-sm" onclick="deleteDNSRecord(\''+r.id+'\')"><svg viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button></td></tr>';
+  });
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
+}
+
+async function startIPTest(){await startSpeedTest('/api/speedtest/ip')}
+async function startDomainTest(){await startSpeedTest('/api/speedtest/domain')}
+
+async function startSpeedTest(url){
+  const st=document.getElementById('testStatus');
+  const btns=[document.getElementById('btnIPTest'),document.getElementById('btnDomainTest')];
+  btns.forEach(b=>b.disabled=true);
+  st.style.display='block';
+  st.innerHTML='<span class="spinner"></span>正在启动测速...';
+  document.getElementById('bestResult').innerHTML='';
+  testResults=null;
+  try{
+    const res=await fetch(url,{method:'POST'});
+    const json=await res.json();
+    if(json.success){
+      st.innerHTML='<span class="spinner"></span>测速已开始，请耐心等待...';
+      startPolling();
+    }else{
+      st.innerHTML='<span style="color:var(--red)">'+json.error+'</span>';
+      btns.forEach(b=>b.disabled=false);
+    }
+  }catch(e){
+    st.innerHTML='<span style="color:var(--red)">请求失败: '+e.message+'</span>';
+    btns.forEach(b=>b.disabled=false);
+  }
+}
+
+function startPolling(){
+  if(pollTimer)clearInterval(pollTimer);
+  pollTimer=setInterval(async()=>{
+    try{
+      const res=await fetch('/api/speedtest/status');
+      const json=await res.json();
+      if(json.running){
+        const d=json.detail||{};
+        let html='<span class="spinner"></span>测速进行中...';
+        let hasDetail=d.phase||d.current_ip||d.test_total>0;
+        if(hasDetail){
+          html+='<div class="progress-detail">';
+          html+='<div class="pd-header">';
+          if(d.phase){
+            const cls=d.phase==='IPv6'?'pd-phase-v6':'pd-phase-v4';
+            html+='<span class="pd-phase '+cls+'">'+d.phase+' 测速</span>';
+          }else{
+            html+='<span class="pd-phase">测速中</span>';
+          }
+          if(d.test_total>0){
+            const pct=Math.min(100,Math.round(d.test_index/d.test_total*100));
+            html+='<span class="pd-counter">进度 <strong>'+d.test_index+'</strong> / '+d.test_total+' ('+pct+'%)</span>';
+          }
+          html+='</div>';
+          if(d.test_total>0){
+            const pct=Math.min(100,Math.round(d.test_index/d.test_total*100));
+            html+='<div class="pd-bar-wrap"><div class="pd-bar-fill" style="width:'+pct+'%"></div></div>';
+          }
+          html+='<div class="pd-stats">';
+          html+='<div class="pd-stat"><span class="pd-label">速度</span><span class="pd-val pd-val-speed">'+(d.last_speed?d.last_speed.toFixed(2)+' MB/s':'--')+'</span></div>';
+          html+='<div class="pd-stat"><span class="pd-label">延迟</span><span class="pd-val pd-val-latency">'+(d.last_latency?d.last_latency.toFixed(0)+' ms':'--')+'</span></div>';
+          html+='<div class="pd-stat"><span class="pd-label">已找到</span><span class="pd-val">'+d.found_count+'</span></div>';
+          html+='</div>';
+          if(d.current_ip){
+            html+='<div class="pd-ip-row"><span class="pd-label">当前IP</span><span class="pd-val">'+d.current_ip+'</span></div>';
+          }
+          if(d.current_domain){
+            html+='<div class="pd-ip-row"><span class="pd-label">当前域名</span><span class="pd-val">'+d.current_domain+'</span></div>';
+          }
+          html+='</div>';
+        }
+        document.getElementById('testStatus').innerHTML=html;
+      }else{
+        clearInterval(pollTimer);pollTimer=null;
+        document.getElementById('btnIPTest').disabled=false;
+        document.getElementById('btnDomainTest').disabled=false;
+        if(json.results&&json.results.success){
+          testResults=json.results;
+          document.getElementById('testStatus').innerHTML='<span style="color:var(--green);font-weight:700">&#10003; 测速完成</span>';
+          document.getElementById('resultCard').style.display='block';
+          renderResults(json.results);
+          loadDNS();
+          showToast('测速完成！','success');
+        }else if(json.results){
+          document.getElementById('testStatus').innerHTML='<span style="color:var(--red)">测速失败: '+json.results.error+'</span>';
+        }else{
+          document.getElementById('testStatus').innerHTML='<span style="color:var(--red)">未获取到结果</span>';
+        }
+      }
+    }catch(e){
+      clearInterval(pollTimer);pollTimer=null;
+      document.getElementById('btnIPTest').disabled=false;
+      document.getElementById('btnDomainTest').disabled=false;
+      document.getElementById('testStatus').innerHTML='<span style="color:var(--red)">状态查询失败</span>';
+    }
+  },2000);
+}
+
+function renderResults(data){
+  let bestHtml='';
+  if(data.top_v4&&data.top_v4.length){
+    const b=data.top_v4[0];
+    bestHtml+='<div class="best-card"><div class="best-label">&#9889; 最佳 IPv4</div><div class="best-ip">'+b.ip+'</div><div class="best-meta">'+(b.source_name||b.source_domain||'')+' &middot; 延迟 '+b.latency.toFixed(0)+'ms &middot; 速度 '+b.download_speed.toFixed(2)+' MB/s</div></div>';
+  }
+  if(data.top_v6&&data.top_v6.length){
+    const b=data.top_v6[0];
+    bestHtml+='<div class="best-card"><div class="best-label">&#9889; 最佳 IPv6</div><div class="best-ip">'+b.ip+'</div><div class="best-meta">'+(b.source_name||b.source_domain||'')+' &middot; 延迟 '+b.latency.toFixed(0)+'ms &middot; 速度 '+b.download_speed.toFixed(2)+' MB/s</div></div>';
+  }
+  document.getElementById('bestResult').innerHTML=bestHtml;
+  renderIPResults(data);
+  renderDomainResults(data);
+  renderDNSActions(data);
+}
+
+function speedClass(v){return v>10?'speed-fast':v>2?'speed-mid':'speed-slow'}
+
+function renderIPResults(data){
+  const el=document.getElementById('ipResultTab');
+  let h='';
+  if(data.top_v4&&data.top_v4.length){
+    h+='<h3 style="font-size:13px;color:var(--cyan);margin:10px 0 8px;font-weight:700;letter-spacing:1px;text-transform:uppercase">IPv4 Top 3 &mdash; A 记录</h3>';
+    h+='<div class="table-wrap"><table><thead><tr><th>#</th><th>IP</th><th>来源域名</th><th>延迟</th><th>速度</th></tr></thead><tbody>';
+    data.top_v4.forEach((r,i)=>{
+      const sc=speedClass(r.download_speed);
+      h+='<tr><td><span class="rank-badge rank-'+(i+1)+'">'+(i+1)+'</span></td><td class="mono">'+r.ip+'</td><td>'+(r.source_name||r.source_domain||'-')+'</td><td>'+r.latency.toFixed(0)+'ms</td><td class="'+sc+'">'+r.download_speed.toFixed(2)+' MB/s</td></tr>';
+    });
+    h+='</tbody></table></div>';
+  }
+  if(data.top_v6&&data.top_v6.length){
+    h+='<h3 style="font-size:13px;color:var(--purple);margin:14px 0 8px;font-weight:700;letter-spacing:1px;text-transform:uppercase">IPv6 Top 3 &mdash; AAAA 记录</h3>';
+    h+='<div class="table-wrap"><table><thead><tr><th>#</th><th>IP</th><th>来源域名</th><th>延迟</th><th>速度</th></tr></thead><tbody>';
+    data.top_v6.forEach((r,i)=>{
+      const sc=speedClass(r.download_speed);
+      h+='<tr><td><span class="rank-badge rank-'+(i+1)+'">'+(i+1)+'</span></td><td class="mono">'+r.ip+'</td><td>'+(r.source_name||r.source_domain||'-')+'</td><td>'+r.latency.toFixed(0)+'ms</td><td class="'+sc+'">'+r.download_speed.toFixed(2)+' MB/s</td></tr>';
+    });
+    h+='</tbody></table></div>';
+  }
+  if(data.results&&data.results.length){
+    h+='<h3 style="font-size:13px;color:var(--text-muted);margin:14px 0 8px;font-weight:700;letter-spacing:1px;text-transform:uppercase">全部结果 (前20)</h3>';
+    h+='<div class="table-wrap"><table><thead><tr><th>IP</th><th>类型</th><th>来源</th><th>延迟</th><th>速度</th></tr></thead><tbody>';
+    data.results.slice(0,20).forEach(r=>{
+      const sc=speedClass(r.download_speed);
+      const tt=r.ip_type==='v4'?'<span class="tag tag-v4">v4</span>':'<span class="tag tag-v6">v6</span>';
+      h+='<tr><td class="mono">'+r.ip+'</td><td>'+tt+'</td><td>'+(r.source_name||r.source_domain||'-')+'</td><td>'+r.latency.toFixed(0)+'ms</td><td class="'+sc+'">'+r.download_speed.toFixed(2)+' MB/s</td></tr>';
+    });
+    h+='</tbody></table></div>';
+  }
+  if(!h)h='<div class="empty">暂无测速结果</div>';
+  el.innerHTML=h;
+}
+
+function renderDomainResults(data){
+  const el=document.getElementById('domainResultTab');
+  if(!data.domain_stats||!data.domain_stats.length){
+    el.innerHTML='<div class="empty">暂无域名统计</div>';return;
+  }
+  let h='<div class="table-wrap"><table><thead><tr><th>备注</th><th>域名</th><th>IP数</th><th>已测</th><th>平均延迟</th><th>平均速度</th><th>最佳IP</th><th>最佳速度</th></tr></thead><tbody>';
+  data.domain_stats.forEach(s=>{
+    const sc=speedClass(s.avg_speed);
+    h+='<tr><td>'+s.name+'</td><td class="mono">'+s.domain+'</td><td>'+s.ip_count+'</td><td>'+s.tested_count+'</td><td>'+(s.tested_count?s.avg_latency.toFixed(0)+'ms':'-')+'</td><td class="'+sc+'">'+(s.tested_count?s.avg_speed.toFixed(2)+' MB/s':'-')+'</td><td class="mono" style="color:var(--green)">'+(s.best_ip||'-')+'</td><td class="'+sc+'">'+(s.best_speed?s.best_speed.toFixed(2)+' MB/s':'-')+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+}
+
+function renderDNSActions(data){
+  const el=document.getElementById('dnsActions');
+  if(!data||(!data.top_v4||!data.top_v4.length)&&(!data.top_v6||!data.top_v6.length)){el.innerHTML='';return}
+  let h='';
+  if(data.top_v4&&data.top_v4.length){
+    const ips=data.top_v4.map(r=>r.ip);
+    h+='<button class="btn btn-cyan btn-sm" onclick="addDNS(\'A\',\''+ips.join(',')+'\')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 添加 A 记录</button> ';
+  }
+  if(data.top_v6&&data.top_v6.length){
+    const ips=data.top_v6.map(r=>r.ip);
+    h+='<button class="btn btn-amber btn-sm" onclick="addDNS(\'AAAA\',\''+ips.join(',')+'\')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 添加 AAAA 记录</button> ';
+  }
+  h+='<button class="btn btn-green btn-sm" onclick="addAllDNS()"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg> 一键添加全部</button>';
+  if(domainListData&&domainListData.length){
+    h+='<div class="cname-row">';
+    h+='<select class="cname-select" id="cnameTarget">';
+    domainListData.forEach(d=>{
+      h+='<option value="'+d.domain+'">'+d.name+' ('+d.domain+')</option>';
+    });
+    h+='</select>';
+    h+='<button class="btn btn-rose btn-sm" onclick="replaceCNAME()"><svg viewBox="0 0 24 24"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> 一键替换CNAME</button>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+
+async function addDNS(type,ipsStr){
+  const name=document.getElementById('cfRecordName').value||'@';
+  const domain=document.getElementById('cfDomain').value;
+  if(!domain){showToast('请先填写域名','error');return}
+  const full=name==='@'?domain:name+'.'+domain;
+  const ips=ipsStr.split(',');
+  let msg='将添加 '+ips.length+' 条 '+type+' 记录到 '+full+'\nIP: '+ips.join(', ')+'\n\n注意: 同名 A/AAAA/CNAME 记录将被自动删除';
+  showModal('添加 '+type+' 记录',msg,async()=>{
+    try{
+      const res=await fetch('/api/dns/records',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,name:full,ips})});
+      const json=await res.json();
+      if(json.success){
+        showToast('成功添加 '+type+' 记录','success');
+        if(json.deleted_conflicts&&json.deleted_conflicts.length)showToast('已自动删除 '+json.deleted_conflicts.length+' 条冲突记录','info');
+        if(json.errors&&json.errors.length)showToast('部分失败: '+json.errors.join('; '),'error');
+        loadDNS();
+      }else showToast('添加失败: '+json.error,'error');
+    }catch(e){showToast('请求失败','error')}
+  });
+}
+
+async function addAllDNS(){
+  const name=document.getElementById('cfRecordName').value||'@';
+  const domain=document.getElementById('cfDomain').value;
+  if(!domain){showToast('请先填写域名','error');return}
+  if(!testResults){showToast('请先进行测速','error');return}
+  const full=name==='@'?domain:name+'.'+domain;
+  let v4=[],v6=[];
+  if(testResults.top_v4)v4=testResults.top_v4.map(r=>r.ip);
+  if(testResults.top_v6)v6=testResults.top_v6.map(r=>r.ip);
+  if(!v4.length&&!v6.length){showToast('没有可添加的IP','error');return}
+  let msg='即将添加:\n';
+  if(v4.length)msg+='A: '+v4.join(', ')+'\n';
+  if(v6.length)msg+='AAAA: '+v6.join(', ');
+  msg+='\n\n注意: 同名 A/AAAA/CNAME 记录将被自动删除';
+  showModal('一键添加全部记录',msg,async()=>{
+    try{
+      let conflictCount=0;
+      if(v4.length){
+        const r1=await fetch('/api/dns/records',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'A',name:full,ips:v4})});
+        const j1=await r1.json();
+        if(j1.deleted_conflicts)conflictCount+=j1.deleted_conflicts.length;
+      }
+      if(v6.length){
+        const r2=await fetch('/api/dns/records',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'AAAA',name:full,ips:v6})});
+        const j2=await r2.json();
+        if(j2.deleted_conflicts)conflictCount+=j2.deleted_conflicts.length;
+      }
+      showToast('DNS 记录添加完成','success');
+      if(conflictCount>0)showToast('已自动删除 '+conflictCount+' 条冲突记录','info');
+      loadDNS();
+    }catch(e){showToast('添加失败','error')}
+  });
+}
+
+async function replaceCNAME(){
+  const name=document.getElementById('cfRecordName').value||'@';
+  const domain=document.getElementById('cfDomain').value;
+  if(!domain){showToast('请先填写域名','error');return}
+  const sel=document.getElementById('cnameTarget');
+  if(!sel){showToast('请选择CNAME目标域名','error');return}
+  const target=sel.value;
+  const targetName=sel.options[sel.selectedIndex].text;
+  const full=name==='@'?domain:name+'.'+domain;
+  showModal('一键替换CNAME','将 '+full+' 的CNAME记录替换为:\n'+targetName+'\n\n注意: 同名 A/AAAA/CNAME 记录将被自动删除',async()=>{
+    try{
+      const res=await fetch('/api/dns/replace-cname',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:full,target})});
+      const json=await res.json();
+      if(json.success){
+        showToast('CNAME 记录替换成功','success');
+        if(json.deleted_conflicts&&json.deleted_conflicts.length)showToast('已自动删除 '+json.deleted_conflicts.length+' 条冲突记录','info');
+        loadDNS();
+      }else showToast('替换失败: '+json.error,'error');
+    }catch(e){showToast('请求失败','error')}
+  });
+}
+
+async function deleteDNSRecord(id){
+  showModal('删除记录','确定删除此 DNS 记录？',async()=>{
+    try{
+      const res=await fetch('/api/dns/records/'+id,{method:'DELETE'});
+      const json=await res.json();
+      if(json.success){showToast('已删除','success');loadDNS()}
+      else showToast('删除失败: '+json.error,'error');
+    }catch(e){showToast('请求失败','error')}
+  });
+}
+
+async function addDomain(){
+  const name=document.getElementById('inputName').value;
+  const domain=document.getElementById('inputDomain').value;
+  if(!domain){showToast('请输入域名','error');return}
+  try{
+    const res=await fetch('/api/domains',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,domain})});
+    const json=await res.json();
+    if(json.success){
+      document.getElementById('inputName').value='';
+      document.getElementById('inputDomain').value='';
+      showToast('域名已添加','success');
+      loadDomains();
+    }else showToast('添加失败: '+json.error,'error');
+  }catch(e){showToast('请求失败','error')}
+}
+
+async function deleteDomain(domain){
+  showModal('删除域名','确定删除 '+domain+' ?',async()=>{
+    try{
+      const res=await fetch('/api/domains/'+encodeURIComponent(domain),{method:'DELETE'});
+      const json=await res.json();
+      if(json.success){showToast('已删除','success');loadDomains()}
+      else showToast('删除失败: '+json.error,'error');
+    }catch(e){showToast('请求失败','error')}
+  });
+}
+
+function editDomain(oldDomain,oldName,isBuiltin){
+  const mask=document.getElementById('modalMask');
+  const m=document.getElementById('modal');
+  document.getElementById('modalTitle').textContent='编辑域名';
+  let formHtml='<div style="display:flex;flex-direction:column;gap:12px">';
+  formHtml+='<div class="form-group"><label>备注名称</label><input type="text" id="editName" value="'+oldName.replace(/"/g,'&quot;')+'" style="padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-size:15px;font-family:inherit;outline:none;width:100%"></div>';
+  formHtml+='<div class="form-group"><label>域名</label><input type="text" id="editDomain" value="'+oldDomain.replace(/"/g,'&quot;')+'" style="padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-size:15px;font-family:inherit;outline:none;width:100%"></div>';
+  formHtml+='</div>';
+  document.getElementById('modalMsg').innerHTML=formHtml;
+  modalCb=async()=>{
+    const newName=document.getElementById('editName').value.trim();
+    const newDomain=document.getElementById('editDomain').value.trim();
+    if(!newDomain){showToast('域名不能为空','error');return}
+    try{
+      const res=await fetch('/api/domains/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_domain:oldDomain,name:newName,domain:newDomain})});
+      const json=await res.json();
+      if(json.success){showToast('域名已更新','success');loadDomains()}
+      else showToast('更新失败: '+json.error,'error');
+    }catch(e){showToast('请求失败','error')}
+  };
+  mask.classList.add('show');
+}
+
+function switchTab(el,tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('ipResultTab').style.display=tab==='ip'?'block':'none';
+  document.getElementById('domainResultTab').style.display=tab==='domain'?'block':'none';
+}
+
+async function testSingleDomain(domain,name,isBuiltin){
+  const st=document.getElementById('testStatus');
+  const btns=[document.getElementById('btnIPTest'),document.getElementById('btnDomainTest')];
+  btns.forEach(b=>b.disabled=true);
+  st.style.display='block';
+  st.innerHTML='<span class="spinner"></span>正在启动单域名测速: '+name+' ('+domain+')...';
+  document.getElementById('bestResult').innerHTML='';
+  testResults=null;
+  try{
+    const res=await fetch('/api/speedtest/single',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({domain,name,is_builtin:isBuiltin})});
+    const json=await res.json();
+    if(json.success){
+      st.innerHTML='<span class="spinner"></span>测速已开始...';
+      startPolling();
+    }else{
+      st.innerHTML='<span style="color:var(--red)">'+json.error+'</span>';
+      btns.forEach(b=>b.disabled=false);
+    }
+  }catch(e){
+    st.innerHTML='<span style="color:var(--red)">请求失败: '+e.message+'</span>';
+    btns.forEach(b=>b.disabled=false);
+  }
+}
+
+loadGeoInfo();
+loadDomains();
+loadCFConfig();
+loadDNS();
+</script>
+</body>
+</html>
