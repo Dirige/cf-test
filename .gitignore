@@ -1,11 +1,13 @@
 # Wrangler
 worker/.wrangler/
 
-# Binaries (note: cfst-server.exe is compiled binary, cfst-server/ is the project dir)
+# Binaries
 *.exe
 *.dll
 *.so
 *.dylib
+cfst-server/cfst-server-linux
+CloudflareSpeedTest-master/cfst_linux_amd64/cfst
 
 # Dependencies
 node_modules/
@@ -26,3 +28,20 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Test results
+*.csv
+result.csv
+
+# Sensitive config files (use .example files instead)
+config.yaml
+wrangler.toml
+
+# Go build cache
+go.sum
+
+# CloudflareSpeedTest-master (original project reference)
+CloudflareSpeedTest-master/
+
+# Trae IDE
+.trae/

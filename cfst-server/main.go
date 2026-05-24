@@ -13,9 +13,7 @@ import (
 
 	"cfst-server/internal/api"
 	"cfst-server/internal/config"
-	"cfst-server/internal/reporter"
 	"cfst-server/internal/scheduler"
-	"cfst-server/internal/speedtest"
 )
 
 //go:embed web/*
@@ -31,17 +29,11 @@ func main() {
 	}
 
 	log.Printf("[Config] Loaded from %s", *configPath)
-	log.Printf("[Config] Worker URL: %s", cfg.WorkerURL)
 	log.Printf("[Config] DNS Record: %s", cfg.DNS.RecordName)
 
 	handler := api.NewHandler(cfg)
 
-	domains, err := loadDomains(cfg)
-	if err != nil {
-		log.Printf("[Domains] Failed to load from worker: %v, using empty list", err)
-		domains = []speedtest.DomainItem{}
-	}
-	handler.SetDomains(domains)
+	handler.LoadDomains()
 
 	if cfg.Speedtest.Schedule != "" {
 		sched := scheduler.New()
@@ -78,23 +70,4 @@ func main() {
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatalf("[Server] Error: %v", err)
 	}
-}
-
-func loadDomains(cfg *config.Config) ([]speedtest.DomainItem, error) {
-	client := reporter.NewClient(cfg.WorkerURL)
-	items, err := client.GetDomains()
-	if err != nil {
-		return nil, err
-	}
-
-	domains := make([]speedtest.DomainItem, len(items))
-	for i, item := range items {
-		domains[i] = speedtest.DomainItem{
-			Name:   item.Name,
-			Domain: item.Domain,
-		}
-	}
-
-	log.Printf("[Domains] Loaded %d domains from worker", len(domains))
-	return domains, nil
 }

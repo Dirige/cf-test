@@ -1,0 +1,22 @@
+server:
+  port: 8080
+  host: "0.0.0.0"
+
+dns:
+  zone_id: "your_cloudflare_zone_id"
+  record_name: "your.domain.com"
+  record_type: "CNAME"
+  api_token: "your_cloudflare_api_token"
+
+speedtest:
+  timeout: 30
+  auto_update_dns: true
+  schedule: ""
+  cfst_path: "./cfst.exe"
+  dns_server: "223.5.5.5"
+
+domains:
+  - name: "示例域名1"
+    domain: "example1.com"
+  - name: "示例域名2"
+    domain: "example2.com"

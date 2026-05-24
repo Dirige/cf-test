@@ -15,16 +15,12 @@ type Client struct {
 type ResultPayload struct {
 	Province      string  `json:"province"`
 	ISP           string  `json:"isp"`
+	Mode          string  `json:"mode"`
 	Domain        string  `json:"domain"`
 	DomainName    string  `json:"domain_name"`
 	DownloadSpeed float64 `json:"download_speed"`
 	Latency       float64 `json:"latency"`
 	IPAddress     string  `json:"ip_address"`
-}
-
-type DomainItem struct {
-	Name   string `json:"name"`
-	Domain string `json:"domain"`
 }
 
 type apiResponse struct {
@@ -64,8 +60,20 @@ func (c *Client) ReportResult(payload ResultPayload) error {
 	return nil
 }
 
-func (c *Client) GetDomains() ([]DomainItem, error) {
-	url := c.WorkerURL + "/api/domains"
+type BestResult struct {
+	Province      string  `json:"province"`
+	ISP           string  `json:"isp"`
+	Mode          string  `json:"mode"`
+	Domain        string  `json:"domain"`
+	DomainName    string  `json:"domain_name"`
+	DownloadSpeed float64 `json:"download_speed"`
+	Latency       float64 `json:"latency"`
+	IPAddress     string  `json:"ip_address"`
+	UpdatedAt     string  `json:"updated_at"`
+}
+
+func (c *Client) GetBestResults(mode string) ([]BestResult, error) {
+	url := c.WorkerURL + "/api/results/best?mode=" + mode
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Get(url)
@@ -75,71 +83,16 @@ func (c *Client) GetDomains() ([]DomainItem, error) {
 	defer resp.Body.Close()
 
 	var apiResp struct {
-		Success bool          `json:"success"`
-		Data    []DomainItem  `json:"data"`
+		Success bool         `json:"success"`
+		Data    []BestResult `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, err
 	}
 
 	if !apiResp.Success {
-		return nil, fmt.Errorf("get domains failed")
+		return nil, fmt.Errorf("get best results failed")
 	}
 
 	return apiResp.Data, nil
-}
-
-func (c *Client) AddDomain(name, domain string) error {
-	url := c.WorkerURL + "/api/domains"
-
-	payload := map[string]string{"name": name, "domain": domain}
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Post(url, "application/json", bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	var apiResp apiResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
-		return err
-	}
-
-	if !apiResp.Success {
-		return fmt.Errorf("add domain failed: %s", apiResp.Error)
-	}
-
-	return nil
-}
-
-func (c *Client) DeleteDomain(domain string) error {
-	url := c.WorkerURL + "/api/domains/" + domain
-
-	req, err := http.NewRequest("DELETE", url, nil)
-	if err != nil {
-		return err
-	}
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	var apiResp apiResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
-		return err
-	}
-
-	if !apiResp.Success {
-		return fmt.Errorf("delete domain failed: %s", apiResp.Error)
-	}
-
-	return nil
 }

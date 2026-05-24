@@ -7,7 +7,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
-.container{max-width:900px;margin:0 auto;padding:20px}
+.container{max-width:1000px;margin:0 auto;padding:20px}
 h1{text-align:center;font-size:24px;margin:20px 0;color:#38bdf8}
 .card{background:#1e293b;border-radius:12px;padding:20px;margin-bottom:16px}
 .card h2{font-size:16px;color:#94a3b8;margin-bottom:12px;border-bottom:1px solid #334155;padding-bottom:8px}
@@ -15,95 +15,142 @@ h1{text-align:center;font-size:24px;margin:20px 0;color:#38bdf8}
 .info-row:last-child{border-bottom:none}
 .label{color:#94a3b8}
 .value{color:#e2e8f0;font-weight:500}
-.best-domain{font-size:20px;color:#22c55e;font-weight:bold}
-.best-speed{font-size:14px;color:#94a3b8}
-.btn{display:inline-block;padding:10px 24px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.btn{display:inline-block;padding:10px 20px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;margin:4px}
 .btn-primary{background:#3b82f6;color:white}
 .btn-primary:hover{background:#2563eb}
 .btn-primary:disabled{background:#475569;cursor:not-allowed}
+.btn-success{background:#22c55e;color:white}
+.btn-success:hover{background:#16a34a}
+.btn-warning{background:#f59e0b;color:white}
+.btn-warning:hover{background:#d97706}
 .btn-danger{background:#ef4444;color:white}
 .btn-danger:hover{background:#dc2626}
-.domain-list{list-style:none}
-.domain-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #334155}
-.domain-item:last-child{border-bottom:none}
-.domain-name{color:#38bdf8;font-size:13px}
-.domain-url{color:#e2e8f0}
-.add-form{display:flex;gap:8px;margin-top:12px}
-.add-form input{flex:1;padding:8px 12px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px}
-.results-table{width:100%;border-collapse:collapse;margin-top:12px}
-.results-table th{background:#334155;color:#38bdf8;padding:10px;text-align:left;font-size:13px}
-.results-table td{padding:10px;border-bottom:1px solid #334155;font-size:13px}
+.btn-sm{padding:6px 12px;font-size:12px}
+.results-table{width:100%;border-collapse:collapse;font-size:13px}
+.results-table th{background:#334155;color:#38bdf8;padding:10px 8px;text-align:left;font-size:12px}
+.results-table td{padding:10px 8px;border-bottom:1px solid #334155}
+.results-table tr:hover{background:#334155}
 .speed-fast{color:#22c55e}
 .speed-medium{color:#f59e0b}
 .speed-slow{color:#ef4444}
 .status{text-align:center;padding:20px;color:#64748b}
-.disclaimer{background:#1e293b;border:2px solid #f59e0b;border-radius:12px;padding:20px;margin-top:20px;text-align:center}
-.disclaimer p{font-size:16px;font-weight:bold;color:#f59e0b;line-height:1.8}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.disclaimer{background:#1e293b;border:2px solid #f59e0b;border-radius:12px;padding:20px;margin-top:20px;text-align:center}
+.disclaimer p{font-size:14px;font-weight:bold;color:#f59e0b;line-height:1.8}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:center}
+.modal-overlay.active{display:flex}
+.modal{background:#1e293b;border-radius:12px;padding:24px;width:90%;max-width:420px;border:1px solid #334155}
+.modal h3{font-size:16px;color:#38bdf8;margin-bottom:16px}
+.modal label{display:block;color:#94a3b8;font-size:12px;margin-bottom:4px;margin-top:12px}
+.modal input{width:100%;padding:8px 12px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;outline:none}
+.modal input:focus{border-color:#3b82f6}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.domain-add{display:flex;gap:8px;margin-top:12px}
+.domain-add input{flex:1;padding:8px 12px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:12px}
+.best-result{background:#22c55e20;border:1px solid #22c55e;border-radius:8px;padding:12px;margin-top:12px}
+.best-result .domain{font-size:18px;color:#22c55e;font-weight:bold}
+.best-result .info{font-size:12px;color:#94a3b8;margin-top:4px}
+.ip-list{margin-top:8px}
+.ip-item{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:#0f172a;border-radius:4px;margin-bottom:4px}
+.ip-item .ip{color:#38bdf8;font-family:monospace}
+.ip-item .speed{color:#22c55e;font-weight:500}
+.ip-item .latency{color:#f59e0b}
+.token-warning{background:#fef3c7;border:2px solid #f59e0b;border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.token-warning .icon{font-size:24px}
+.token-warning .text{flex:1}
+.token-warning .text p{font-size:14px;font-weight:600;color:#92400e}
+.token-warning .text small{font-size:12px;color:#b45309}
+.tab-bar{display:flex;gap:4px;margin-bottom:12px}
+.tab-btn{padding:6px 14px;border:1px solid #334155;border-radius:6px;background:transparent;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.tab-btn:hover{border-color:#3b82f6;color:#e2e8f0}
+.tab-btn.active{background:rgba(59,130,246,0.15);border-color:#3b82f6;color:#3b82f6}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
 </style>
 </head>
 <body>
 <div class="container">
-<h1>🌐 CFST 域名测速工具</h1>
+<h1>CFST 域名测速工具</h1>
+
+<div id="tokenWarning" style="display:none" class="token-warning">
+<span class="icon">&#9888;</span>
+<div class="text">
+<p>CF API Token 未配置</p>
+<small>DNS 记录操作需要 Cloudflare API Token，请先配置</small>
+</div>
+<button class="btn btn-warning btn-sm" onclick="showTokenModal()">配置 Token</button>
+</div>
 
 <div class="card">
-<h2>📍 当前信息</h2>
+<h2>当前信息</h2>
 <div id="geoInfo" class="status">加载中...</div>
 </div>
 
 <div class="card">
-<h2>⚡ 测速控制</h2>
+<h2>测速控制</h2>
 <div style="text-align:center">
-<button id="btnTest" class="btn btn-primary" onclick="startTest()">开始测速</button>
+<button id="btnIPTest" class="btn btn-primary" onclick="startIPTest()">方案一：IP测速模式 (A/AAAA记录)</button>
+<button id="btnDomainTest" class="btn btn-success" onclick="startDomainTest()">方案二：域名测速模式 (CNAME记录)</button>
 </div>
 <div id="testStatus" class="status" style="display:none"></div>
-</div>
-
-<div class="card" id="bestCard" style="display:none">
-<h2>🏆 当前最佳结果</h2>
-<div id="bestResult"></div>
+<div id="bestResult" style="display:none"></div>
 </div>
 
 <div class="card">
-<h2>📋 测速详情</h2>
-<div id="testResults" class="status">尚未测速</div>
+<h2>域名列表与测速结果</h2>
+<div id="domainList" class="status">加载中...</div>
+<div class="domain-add">
+<input type="text" id="inputName" placeholder="备注名称">
+<input type="text" id="inputDomain" placeholder="域名">
+<button class="btn btn-primary btn-sm" onclick="addDomain()">添加</button>
+</div>
 </div>
 
 <div class="card">
-<h2>🔗 DNS 记录</h2>
+<h2>DNS 记录</h2>
 <div id="dnsInfo" class="status">加载中...</div>
 </div>
 
 <div class="card">
-<h2>📝 域名列表</h2>
-<div id="domainList" class="status">加载中...</div>
-<div class="add-form">
-<input type="text" id="inputName" placeholder="名称">
-<input type="text" id="inputDomain" placeholder="域名">
-<button class="btn btn-primary" onclick="addDomain()">添加</button>
+<h2>测速记录</h2>
+<div class="tab-bar">
+<button class="tab-btn active" onclick="switchResultTab(this,'ip')">IP记录</button>
+<button class="tab-btn" onclick="switchResultTab(this,'domain')">域名记录</button>
+</div>
+<div id="ipPanel" class="tab-panel active">
+<div id="ipResultsList" class="status">加载中...</div>
+</div>
+<div id="domainPanel" class="tab-panel">
+<div id="domainResultsList" class="status">加载中...</div>
 </div>
 </div>
 
 <div class="disclaimer">
-<p>⚠️ 共享计划声明</p>
-<p>本项目为共享测速计划，所有用户的测速结果将同步至共享数据库。</p>
-<p>您的测速数据将被汇总展示，帮助其他用户选择最优域名。</p>
-<p style="font-size:14px;color:#94a3b8;margin-top:10px">如不同意数据共享，请删除本程序。</p>
+<p>共享计划声明</p>
+<p>本项目为共享测速计划，您的测速结果将同步至共享数据库。</p>
+<p style="font-size:12px;color:#94a3b8;margin-top:8px">如不同意数据共享，请删除本程序。</p>
 </div>
 </div>
 
 <script>
+let testResults = {};
+let bestIPs = [];
+let lastDomains = [];
+
+const ispNames = {telecom:'电信', unicom:'联通', mobile:'移动', other:'其他'};
+
 async function loadGeoInfo(){
 try{
 const res=await fetch('/api/geoip');
 const json=await res.json();
 if(json.success){
 const d=json.data;
+const ispDisplay = ispNames[d.isp_tag] || d.isp_tag || '未知';
 document.getElementById('geoInfo').innerHTML=
-'<div class="info-row"><span class="label">IP</span><span class="value">'+d.IP+'</span></div>'+
-'<div class="info-row"><span class="label">位置</span><span class="value">'+d.Province+' - '+d.City+'</span></div>'+
-'<div class="info-row"><span class="label">运营商</span><span class="value">'+d.ISP+' ('+d.ISPTag+')</span></div>';
+'<div class="info-row"><span class="label">IP</span><span class="value">'+(d.ip||'未知')+'</span></div>'+
+'<div class="info-row"><span class="label">位置</span><span class="value">'+(d.province||'未知')+' - '+(d.city||'未知')+'</span></div>'+
+'<div class="info-row"><span class="label">运营商</span><span class="value">'+(d.isp||'未知')+' ('+ispDisplay+')</span></div>';
 }
 }catch(e){document.getElementById('geoInfo').innerHTML='<span style="color:#ef4444">获取失败</span>'}
 }
@@ -113,13 +160,33 @@ try{
 const res=await fetch('/api/domains');
 const json=await res.json();
 if(json.success){
-const list=document.getElementById('domainList');
-if(json.data.length===0){list.innerHTML='<div class="status">暂无域名</div>';return}
-list.innerHTML='<ul class="domain-list">'+
-json.data.map(d=>'<li class="domain-item"><div><div class="domain-name">'+d.name+'</div><div class="domain-url">'+d.domain+'</div></div>'+(d.is_builtin?'<span style="color:#64748b">内置</span>':'<button class="btn btn-danger" onclick="deleteDomain(\''+d.domain+'\')">删除</button>')+'</li>').join('')+
-'</ul>';
+lastDomains=json.data;
+renderDomainTable(json.data);
 }
 }catch(e){document.getElementById('domainList').innerHTML='<span style="color:#ef4444">加载失败</span>'}
+}
+
+function renderDomainTable(domains){
+const list=document.getElementById('domainList');
+if(domains.length===0){list.innerHTML='<div class="status">暂无域名</div>';return}
+
+list.innerHTML='<table class="results-table"><thead><tr><th>备注</th><th>域名</th><th>延迟</th><th>速度</th><th>状态</th><th>操作</th></tr></thead><tbody>'+
+domains.map(d=>{
+const r = testResults[d.domain] || {};
+const latency = r.latency !== undefined ? r.latency.toFixed(0)+'ms' : '-';
+const speed = r.download_speed !== undefined ? r.download_speed.toFixed(2)+' MB/s' : '-';
+const speedClass = r.download_speed > 10 ? 'speed-fast' : r.download_speed > 2 ? 'speed-medium' : 'speed-slow';
+const status = r.success !== undefined ? (r.success ? '✅' : '❌') : '-';
+const ops = [];
+ops.push('<button class="btn btn-primary btn-sm" onclick="testSingleDomain(\''+d.domain+'\',\''+encodeURIComponent(d.name||'')+'\')">测速</button>');
+ops.push('<button class="btn btn-warning btn-sm" onclick="editDomain(\''+d.domain+'\',\''+encodeURIComponent(d.name||'')+'\')">编辑</button>');
+ops.push('<button class="btn btn-danger btn-sm" onclick="deleteDomain(\''+d.domain+'\')">删除</button>');
+if(r.success && r.ip){
+ops.push('<button class="btn btn-success btn-sm" onclick="addCNAME(\''+d.domain+'\')">CNAME</button>');
+}
+return'<tr><td>'+(d.name||'-')+'</td><td>'+d.domain+'</td><td>'+latency+'</td><td class="'+speedClass+'">'+speed+'</td><td>'+status+'</td><td>'+ops.join(' ')+'</td></tr>';
+}).join('')+
+'</tbody></table>';
 }
 
 async function loadDNS(){
@@ -143,36 +210,47 @@ document.getElementById('dnsInfo').innerHTML=
 }catch(e){document.getElementById('dnsInfo').innerHTML='<span style="color:#ef4444">加载失败</span>'}
 }
 
-async function startTest(){
-const btn=document.getElementById('btnTest');
+async function startIPTest(){
+const btn=document.getElementById('btnIPTest');
 const status=document.getElementById('testStatus');
 btn.disabled=true;
 btn.innerHTML='<span class="spinner"></span>测速中...';
 status.style.display='block';
 status.innerHTML='正在测速，请稍候...';
+testResults = {};
+bestIPs = [];
 
 try{
-const res=await fetch('/api/speedtest',{method:'POST'});
+const res=await fetch('/api/speedtest/ip',{method:'POST'});
 const json=await res.json();
 if(json.success){
 const d=json.data;
 status.innerHTML='测速完成！';
 
-if(d.best_result){
-document.getElementById('bestCard').style.display='block';
-document.getElementById('bestResult').innerHTML=
-'<div class="best-domain">'+d.best_result.domain_name+'</div>'+
-'<div class="best-speed">'+d.best_result.domain+' - '+d.best_result.download_speed.toFixed(2)+' MB/s</div>';
+d.results.forEach(r => {
+testResults[r.domain] = r;
+bestIPs.push(r);
+});
+
+if(d.results.length>0){
+const best = d.results[0];
+document.getElementById('bestResult').style.display='block';
+
+let ipListHTML = '<div class="ip-list">';
+bestIPs.forEach((ip, index) => {
+ipListHTML += '<div class="ip-item"><span class="ip">'+(index+1)+'. '+ip.ip+'</span><span class="latency">'+ip.latency.toFixed(0)+'ms</span><span class="speed">'+ip.download_speed.toFixed(2)+' MB/s</span></div>';
+});
+ipListHTML += '</div>';
+
+document.getElementById('bestResult').innerHTML='<div class="best-result">'+
+'<div class="domain">最佳IP: '+best.ip+'</div>'+
+'<div class="info">域名: '+best.domain+' | 延迟: '+best.latency.toFixed(0)+'ms | 速度: '+best.download_speed.toFixed(2)+' MB/s</div>'+
+ipListHTML+
+'<div style="margin-top:12px"><button class="btn btn-success" onclick="addBatchDNS()">批量添加A/AAAA记录 (3条)</button></div>'+
+'</div>';
 }
 
-const table='<table class="results-table"><thead><tr><th>域名</th><th>延迟</th><th>速度</th><th>状态</th></tr></thead><tbody>'+
-d.results.map(r=>{
-const speedClass=r.download_speed>10?'speed-fast':r.download_speed>2?'speed-medium':'speed-slow';
-return'<tr><td>'+r.domain_name+'</td><td>'+r.latency.toFixed(0)+'ms</td><td class="'+speedClass+'">'+r.download_speed.toFixed(2)+' MB/s</td><td>'+(r.success?'✅':'❌ '+r.error)+'</td></tr>';
-}).join('')+
-'</tbody></table>';
-document.getElementById('testResults').innerHTML=table;
-
+loadDomains();
 loadDNS();
 }else{
 status.innerHTML='<span style="color:#ef4444">测速失败: '+json.error+'</span>';
@@ -181,15 +259,97 @@ status.innerHTML='<span style="color:#ef4444">测速失败: '+json.error+'</span
 status.innerHTML='<span style="color:#ef4444">请求失败</span>';
 }finally{
 btn.disabled=false;
-btn.innerHTML='开始测速';
+btn.innerHTML='方案一：IP测速模式 (A/AAAA记录)';
 }
+}
+
+async function startDomainTest(){
+const btn=document.getElementById('btnDomainTest');
+const status=document.getElementById('testStatus');
+btn.disabled=true;
+btn.innerHTML='<span class="spinner"></span>测速中...';
+status.style.display='block';
+status.innerHTML='正在测速，请稍候...';
+testResults = {};
+
+try{
+const res=await fetch('/api/speedtest/domain',{method:'POST'});
+const json=await res.json();
+if(json.success){
+const d=json.data;
+status.innerHTML='测速完成！';
+
+d.results.forEach(r => {
+testResults[r.domain] = r;
+});
+
+const successful = d.results.filter(r => r.success);
+if(successful.length > 0){
+const best = successful.reduce((a, b) => (b.download_speed > a.download_speed) ? b : a);
+document.getElementById('bestResult').style.display='block';
+document.getElementById('bestResult').innerHTML='<div class="best-result"><div class="domain">最佳域名: '+best.domain_name+'</div><div class="info">域名: '+best.domain+' | 延迟: '+best.latency.toFixed(0)+'ms | 速度: '+best.download_speed.toFixed(2)+' MB/s</div></div>';
+}
+
+loadDomains();
+loadDNS();
+}else{
+status.innerHTML='<span style="color:#ef4444">测速失败: '+json.error+'</span>';
+}
+}catch(e){
+status.innerHTML='<span style="color:#ef4444">请求失败</span>';
+}finally{
+btn.disabled=false;
+btn.innerHTML='方案二：域名测速模式 (CNAME记录)';
+}
+}
+
+async function addBatchDNS(){
+if(bestIPs.length === 0){
+alert('没有可用的IP，请先进行测速');
+return;
+}
+
+const name = prompt('请输入DNS记录名称（如：@ 或 www）');
+if(!name) return;
+
+const ips = bestIPs.map(ip => ip.ip);
+const types = bestIPs.map(ip => ip.is_ipv6 ? 'AAAA' : 'A');
+
+try{
+const res = await fetch('/api/dns/batch', {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({
+name: name,
+content: ips
+})
+});
+const json = await res.json();
+if(json.success){
+alert('成功添加 '+json.data.created+' 条DNS记录！');
+loadDNS();
+}else{
+alert('添加失败: ' + json.error);
+}
+}catch(e){
+alert('请求失败');
+}
+}
+
+async function addCNAME(domain){
+const name=prompt('请输入CNAME记录名称（如：@ 或 www）');
+if(!name)return;
+try{
+const res=await fetch('/api/dns/replace',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,type:'CNAME',content:domain})});
+const json=await res.json();
+if(json.success){alert('CNAME记录添加成功！');loadDNS()}else{alert('添加失败: '+json.error)}
+}catch(e){alert('请求失败')}
 }
 
 async function addDomain(){
 const name=document.getElementById('inputName').value;
 const domain=document.getElementById('inputDomain').value;
 if(!domain){alert('请输入域名');return}
-
 try{
 const res=await fetch('/api/domains',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,domain})});
 const json=await res.json();
@@ -210,9 +370,157 @@ if(json.success){loadDomains()}else{alert('删除失败: '+json.error)}
 }catch(e){alert('请求失败')}
 }
 
+async function testSingleDomain(domain,name){
+const btn=event.target;
+btn.disabled=true;
+btn.innerHTML='<span class="spinner"></span>';
+try{
+const res=await fetch('/api/speedtest/single',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({domain:domain,name:decodeURIComponent(name||'')})});
+const json=await res.json();
+if(json.success && json.data.results.length>0){
+const r=json.data.results[0];
+testResults[domain]=r;
+renderDomainTable(lastDomains);
+}else{
+alert('测速失败: '+(json.error||'无结果'));
+}
+}catch(e){
+alert('测速请求失败: '+e.message);
+}finally{
+btn.disabled=false;
+btn.innerHTML='测速';
+}
+}
+
 loadGeoInfo();
 loadDomains();
 loadDNS();
+loadBestResults();
+loadTokenStatus();
+
+function editDomain(domain,name){
+document.getElementById('editOrigDomain').value=domain;
+document.getElementById('editName').value=decodeURIComponent(name);
+document.getElementById('editDomain').value=domain;
+document.getElementById('editModal').classList.add('active');
+}
+function closeEditModal(){
+document.getElementById('editModal').classList.remove('active');
+}
+async function saveDomainEdit(){
+const origDomain=document.getElementById('editOrigDomain').value;
+const name=document.getElementById('editName').value.trim();
+const newDomain=document.getElementById('editDomain').value.trim();
+if(!newDomain){alert('域名不能为空');return}
+try{
+const res=await fetch('/api/domains/'+encodeURIComponent(origDomain),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,new_domain:newDomain})});
+const json=await res.json();
+if(json.success){closeEditModal();loadDomains()}else{alert('编辑失败: '+json.error)}
+}catch(e){alert('请求失败')}
+}
+
+function switchResultTab(btn,tab){
+document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+btn.classList.add('active');
+document.getElementById('ipPanel').classList.toggle('active',tab==='ip');
+document.getElementById('domainPanel').classList.toggle('active',tab==='domain');
+}
+
+async function loadBestResults(){
+try{
+const[r1,r2]=await Promise.all([
+fetch('/api/results/best?mode=ip').then(r=>r.json()),
+fetch('/api/results/best?mode=domain').then(r=>r.json())
+]);
+if(r1.success&&r1.data&&r1.data.length>0){
+renderBestResults(r1.data,'ipResultsList');
+}else{
+document.getElementById('ipResultsList').innerHTML='<div class="status">暂无IP测速记录</div>';
+}
+if(r2.success&&r2.data&&r2.data.length>0){
+renderBestResults(r2.data,'domainResultsList');
+}else{
+document.getElementById('domainResultsList').innerHTML='<div class="status">暂无域名测速记录</div>';
+}
+}catch(e){
+document.getElementById('ipResultsList').innerHTML='<span style="color:#ef4444">加载失败</span>';
+document.getElementById('domainResultsList').innerHTML='<span style="color:#ef4444">加载失败</span>';
+}
+}
+
+function renderBestResults(results,elementId){
+const list=document.getElementById(elementId);
+list.innerHTML='<table class="results-table"><thead><tr><th>省份</th><th>运营商</th><th>最佳域名</th><th>IP</th><th>下载速度</th><th>延迟</th><th>更新时间</th></tr></thead><tbody>'+
+results.map(r=>{
+const speedClass = r.download_speed > 10 ? 'speed-fast' : r.download_speed > 2 ? 'speed-medium' : 'speed-slow';
+const ispDisplay = ispNames[r.isp] || r.isp || '-';
+return'<tr><td>'+(r.province||'-')+'</td><td>'+ispDisplay+'</td><td>'+(r.domain_name||r.domain||'-')+'</td><td style="color:#38bdf8;font-family:monospace">'+(r.ip_address||'-')+'</td><td class="'+speedClass+'">'+(r.download_speed||0).toFixed(2)+' MB/s</td><td>'+(r.latency||0).toFixed(0)+'ms</td><td>'+(r.updated_at||'-')+'</td></tr>';
+}).join('')+
+'</tbody></table>';
+}
+
+async function loadTokenStatus(){
+try{
+const res=await fetch('/api/token');
+const json=await res.json();
+if(json.success){
+if(!json.data.configured){
+document.getElementById('tokenWarning').style.display='flex';
+}
+}
+}catch(e){console.error(e)}
+}
+
+function showTokenModal(){
+document.getElementById('tokenModal').classList.add('active');
+document.getElementById('inputToken').value='';
+document.getElementById('tokenStatus').textContent='';
+}
+function closeTokenModal(){
+document.getElementById('tokenModal').classList.remove('active');
+}
+async function saveToken(){
+const token=document.getElementById('inputToken').value.trim();
+if(!token){alert('请输入Token');return}
+try{
+const res=await fetch('/api/token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});
+const json=await res.json();
+if(json.success){
+closeTokenModal();
+document.getElementById('tokenWarning').style.display='none';
+loadDNS();
+}else{alert('保存失败: '+json.error)}
+}catch(e){alert('请求失败')}
+}
 </script>
+
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
+<div class="modal">
+<h3>编辑域名</h3>
+<input type="hidden" id="editOrigDomain">
+<label>备注名</label>
+<input type="text" id="editName" placeholder="例如: NB优选">
+<label>域名</label>
+<input type="text" id="editDomain" placeholder="例如: cf.naifei.top">
+<div class="modal-actions">
+<button class="btn btn-primary btn-sm" onclick="saveDomainEdit()">保存</button>
+<button class="btn btn-sm" style="background:#475569;color:white" onclick="closeEditModal()">取消</button>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="tokenModal" onclick="if(event.target===this)closeTokenModal()">
+<div class="modal">
+<h3>配置 Cloudflare API Token</h3>
+<div id="tokenStatus" style="margin-bottom:12px;font-size:12px;color:#94a3b8"></div>
+<label>API Token</label>
+<input type="text" id="inputToken" placeholder="输入你的 Cloudflare API Token">
+<div style="font-size:11px;color:#64748b;margin-top:6px">需要 Zone:DNS:Edit 权限，可在 Cloudflare 控制台创建</div>
+<div class="modal-actions">
+<button class="btn btn-primary btn-sm" onclick="saveToken()">保存</button>
+<button class="btn btn-sm" style="background:#475569;color:white" onclick="closeTokenModal()">取消</button>
+</div>
+</div>
+</div>
 </body>
 </html>

@@ -8,4 +8,5 @@ services:
       - "8080:8080"
     volumes:
       - ./config.yaml:/app/config.yaml
+      - ../CloudflareSpeedTest-master/cfst_linux_amd64/cfst:/app/cfst
     restart: unless-stopped
