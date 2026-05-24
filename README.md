@@ -102,56 +102,9 @@ python server.py
 
 测速完成后，点击结果中的 IP 可直接添加为 DNS 记录，也可使用 CNAME 替换功能将域名指向优选域名。
 
-## 共享测速 Worker 部署
+## 共享测速说明
 
-项目内置了一个 Cloudflare Worker 用于汇总共享测速数据。如需自行部署：
-
-### 前置条件
-
-- Node.js 18+
-- Cloudflare 账号
-
-### 部署步骤
-
-```bash
-cd worker
-npm install
-npx wrangler d1 create cf-test
-```
-
-创建 D1 数据库后，将返回的 `database_id` 填入 `wrangler.toml`：
-
-```toml
-[[d1_databases]]
-binding = "DB"
-database_name = "cf-test"
-database_id = "你的数据库ID"
-```
-
-然后部署：
-
-```bash
-npx wrangler deploy
-```
-
-部署完成后，将 Worker URL 填入 `server.py` 中的 `cf_config["worker_url"]`：
-
-```python
-cf_config = {"worker_url": "https://your-worker.your-subdomain.workers.dev"}
-```
-
-### Worker API
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/` | 共享测速数据展示页面 |
-| GET | `/api/stats` | 数据概览（总次数、覆盖省份、最优记录数） |
-| GET | `/api/results/best?mode=ip\|ipv6\|domain\|domain_v6` | 按模式查询最优记录 |
-| POST | `/api/results` | 提交测速结果 |
-
-### 数据保留
-
-共享数据保留 **3 天**，超期自动清理。每个省份+运营商+模式仅保留最快的一条记录。
+测速完成后，结果会自动共享上传，按省份和运营商汇总最优记录，供所有用户参考。每个省份+运营商+模式仅保留最快的一条记录，数据保留 3 天后自动清理。
 
 ## 测速流程说明
 
