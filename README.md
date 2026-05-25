@@ -299,3 +299,4 @@ docker pull dirige/cf-test:latest
 
 - GitHub Issues: [提交 Issue](https://github.com/Dirige/cf-test/issues)
 - GitHub Discussions: [参与讨论](https://github.com/Dirige/cf-test/discussions)
+- Telegram 交流群: [加入群组](https://t.me/Dirige_Proxy)
