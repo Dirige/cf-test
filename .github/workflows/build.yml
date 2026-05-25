@@ -22,7 +22,7 @@ jobs:
             suffix: linux-arm64
           - goos: windows
             goarch: amd64
-            suffix: windows-amd64.exe
+            suffix: windows-amd64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,13 +38,37 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
-        run: go build -o cfst-server-${{ matrix.suffix }} .
+        run: |
+          EXT=""
+          if [ "${{ matrix.goos }}" = "windows" ]; then EXT=".exe"; fi
+          go build -o cfst-server-${{ matrix.suffix }}${EXT} .
+
+      - name: Package Windows release
+        if: matrix.goos == 'windows'
+        run: |
+          mkdir -p release/cfst-server-${{ matrix.suffix }}
+          cp cfst-server/cfst-server-${{ matrix.suffix }}.exe release/cfst-server-${{ matrix.suffix }}/
+          cp cfst-server/config.yaml.example release/cfst-server-${{ matrix.suffix }}/
+          cp cfst-server-win64/启动服务.bat release/cfst-server-${{ matrix.suffix }}/
+          cp cfst-server-win64/使用说明.txt release/cfst-server-${{ matrix.suffix }}/
+          cd release && zip -r cfst-server-${{ matrix.suffix }}.zip cfst-server-${{ matrix.suffix }}/
+
+      - name: Package Linux release
+        if: matrix.goos == 'linux'
+        run: |
+          mkdir -p release/cfst-server-${{ matrix.suffix }}
+          cp cfst-server/cfst-server-${{ matrix.suffix }} release/cfst-server-${{ matrix.suffix }}/
+          cp cfst-server/config.yaml.example release/cfst-server-${{ matrix.suffix }}/
+          cd release && tar czf cfst-server-${{ matrix.suffix }}.tar.gz cfst-server-${{ matrix.suffix }}/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: cfst-server-${{ matrix.suffix }}
-          path: cfst-server/cfst-server-${{ matrix.suffix }}
+          path: |
+            release/cfst-server-${{ matrix.suffix }}.zip
+            release/cfst-server-${{ matrix.suffix }}.tar.gz
+          if-no-files-found: ignore
 
   release:
     needs: build
