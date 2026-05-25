@@ -9,12 +9,22 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	"cfst-server/internal/api"
 	"cfst-server/internal/config"
 	"cfst-server/internal/scheduler"
 )
+
+func fatalWithPause(format string, v ...interface{}) {
+	log.Printf(format, v...)
+	if runtime.GOOS == "windows" {
+		fmt.Println("\n按回车键退出...")
+		fmt.Scanln()
+	}
+	os.Exit(1)
+}
 
 //go:embed web/*
 var webFS embed.FS
@@ -25,7 +35,7 @@ func main() {
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		fatalWithPause("Failed to load config: %v", err)
 	}
 
 	log.Printf("[Config] Loaded from %s", *configPath)
@@ -68,6 +78,6 @@ func main() {
 	}()
 
 	if err := http.ListenAndServe(addr, mux); err != nil {
-		log.Fatalf("[Server] Error: %v", err)
+		fatalWithPause("[Server] Error: %v", err)
 	}
 }
