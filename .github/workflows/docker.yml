@@ -3,7 +3,7 @@ name: Build Docker Image
 on:
   push:
     branches:
-      - mimo
+      - MiMo-V2.2-Pro
     paths:
       - 'cfst-server/**'
 
