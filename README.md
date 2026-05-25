@@ -5,7 +5,6 @@
 ## ✨ 功能特性
 
 - 🚀 **域名测速** - 自动测试多个优选域名的延迟和下载速度
-- 🗺️ **地图可视化** - 使用 ECharts 中国地图展示各省份最佳域名
 - 🔄 **自动 DNS** - 测速完成后自动更新 Cloudflare DNS 记录
 - ⏰ **定时任务** - 支持 cron 表达式定时执行测速
 - 🐳 **Docker 支持** - 提供 Docker 和 docker-compose 部署方案
@@ -242,28 +241,6 @@ GOOS=linux GOARCH=amd64 go build -o cfst-server .
 GOOS=linux GOARCH=arm64 go build -o cfst-server .
 ```
 
-### GitHub Actions
-
-项目包含 2 个 GitHub Actions 工作流：
-
-1. **build.yml** - 编译多平台二进制文件并发布到 GitHub Releases（推送 tag 时触发）
-2. **docker.yml** - 构建并推送 Docker 镜像到 GHCR 和 Docker Hub
-
-需要在 GitHub 仓库设置以下 Secrets：
-
-- `CLOUDFLARE_API_TOKEN` - Cloudflare API Token
-- `DOCKERHUB_USERNAME` - Docker Hub 用户名
-- `DOCKERHUB_TOKEN` - Docker Hub 访问令牌
-
-### 发布新版本
-
-推送 tag 即可自动构建并发布：
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
 ## 🐳 Docker 镜像
 
 预构建镜像支持 `linux/amd64` 和 `linux/arm64` 两种架构：
@@ -276,14 +253,6 @@ docker pull ghcr.io/dirige/cf-test:latest
 docker pull dirige/cf-test:latest
 ```
 
-## 🤝 贡献指南
-
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 创建 Pull Request
-
 ## 📝 许可证
 
 本项目基于 MIT 许可证开源 - 详见 [LICENSE](LICENSE) 文件
@@ -291,7 +260,6 @@ docker pull dirige/cf-test:latest
 ## 🙏 致谢
 
 - [CloudflareSpeedTest](https://github.com/XIU2/CloudflareSpeedTest) - 测速核心逻辑
-- [ECharts](https://echarts.apache.org/) - 地图可视化
 
 ## 📞 联系方式
 

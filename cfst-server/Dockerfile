@@ -25,8 +25,6 @@ RUN \
     chmod +x /app/cfst && \
     rm -f /tmp/cfst.tar.gz
 
-COPY --from=builder /app/config.yaml .
-
 EXPOSE 8080
 
 CMD ["./cfst-server", "-c", "/app/config.yaml"]
