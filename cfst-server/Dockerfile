@@ -36,8 +36,9 @@ RUN \
     echo 'else' >> /entrypoint.sh && \
     echo '    CFST_PATH="./cfst_amd64"' >> /entrypoint.sh && \
     echo 'fi' >> /entrypoint.sh && \
-    echo 'sed -i "s|cfst_path: \".*\"|cfst_path: \"$CFST_PATH\"|" /app/config.yaml' >> /entrypoint.sh && \
-    echo 'exec ./cfst-server -c /app/config.yaml' >> /entrypoint.sh && \
+    echo 'cp /app/config.yaml /tmp/config.yaml' >> /entrypoint.sh && \
+    echo 'sed -i "s|cfst_path: \".*\"|cfst_path: \"$CFST_PATH\"|" /tmp/config.yaml' >> /entrypoint.sh && \
+    echo 'exec ./cfst-server -c /tmp/config.yaml' >> /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
 EXPOSE 8080
