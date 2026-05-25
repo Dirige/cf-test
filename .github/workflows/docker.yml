@@ -6,6 +6,7 @@ on:
       - MiMo-V2.2-Pro
     paths:
       - 'cfst-server/**'
+      - '.github/workflows/docker.yml'
 
 jobs:
   docker:
