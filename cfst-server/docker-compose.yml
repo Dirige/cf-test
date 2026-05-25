@@ -2,11 +2,10 @@ version: '3.8'
 
 services:
   cfst-server:
-    build: .
+    image: ghcr.io/dirige/cf-test:latest
     container_name: cfst-server
     ports:
       - "8080:8080"
     volumes:
       - ./config.yaml:/app/config.yaml
-      - ../CloudflareSpeedTest-master/cfst_linux_amd64/cfst:/app/cfst
     restart: unless-stopped
