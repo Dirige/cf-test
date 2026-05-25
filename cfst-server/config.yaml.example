@@ -12,7 +12,7 @@ speedtest:
   timeout: 30
   auto_update_dns: true
   schedule: ""
-  cfst_path: "./cfst.exe"
+  cfst_path: "./cfst"
   dns_server: "223.5.5.5"
 
 domains:
