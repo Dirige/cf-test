@@ -188,9 +188,6 @@ func (h *Handler) handleDomainSpeedTest(w http.ResponseWriter, r *http.Request) 
 	for _, r := range results {
 		if r.Success && r.DownloadSpeed > 0 {
 			mode := "domain"
-			if r.IsIPv6 {
-				mode = "domain_v6"
-			}
 			reportPayload := reporter.ResultPayload{
 				Province:      ipInfo.Province,
 				ISP:           ipInfo.ISPTag,

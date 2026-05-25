@@ -4,9 +4,11 @@ interface Env {
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
+
+const THREE_DAYS_SECONDS = 3 * 24 * 60 * 60;
 
 const INIT_SQL: string[] = [
   `CREATE TABLE IF NOT EXISTS speed_results (
@@ -33,41 +35,31 @@ const INIT_SQL: string[] = [
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (province, isp, mode)
   )`,
-  `CREATE TABLE IF NOT EXISTS domains (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    domain TEXT UNIQUE NOT NULL,
-    is_builtin BOOLEAN DEFAULT 0
-  )`,
   `CREATE INDEX IF NOT EXISTS idx_speed_results_province_isp ON speed_results(province, isp)`,
   `CREATE INDEX IF NOT EXISTS idx_speed_results_created_at ON speed_results(created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_best_results_updated_at ON best_results(updated_at)`,
 ];
 
-const SEED_DOMAINS: [string, string][] = [
-  ['CF优选-090227', 'youxuan.cf.090227.xyz'],
-  ['Shopify官方', 'www.shopify.com'],
-  ['Mingyu优选', 'bestcf.030101.xyz'],
-  ['育碧商店', 'store.ubi.com'],
-  ['WeTest优选', 'cf.cloudflare.182682.xyz'],
-  ['MIYU优选', 'saas.sin.fan'],
-  ['NexusMods', 'staticdelivery.nexusmods.com'],
-  ['乌克兰外交部', 'mfa.gov.ua'],
-  ['NB优选', 'cf.cf.cnae.top'],
-  ['Visa官方', 'www.visa.cn'],
-  ['秋名山优选', 'cf.877774.xyz'],
-  ['无名氏维护域名', 'cf.tencentapp.cn'],
-];
+function getBeijingTime(): Date {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  return new Date(utc + 8 * 3600000);
+}
+
+async function cleanupOldData(db: D1Database): Promise<void> {
+  await db.prepare(
+    "DELETE FROM speed_results WHERE created_at < datetime('now', '-3 days')"
+  ).run();
+  await db.prepare(
+    "DELETE FROM best_results WHERE updated_at < datetime('now', '-3 days')"
+  ).run();
+}
 
 async function ensureDB(db: D1Database): Promise<void> {
   for (const sql of INIT_SQL) {
     await db.prepare(sql).run();
   }
-  const { count } = await db.prepare('SELECT COUNT(*) as count FROM domains').first() as { count: number };
-  if (count === 0) {
-    for (const [name, domain] of SEED_DOMAINS) {
-      await db.prepare('INSERT INTO domains (name, domain, is_builtin) VALUES (?, ?, 1)').bind(name, domain).run();
-    }
-  }
+  await cleanupOldData(db);
 }
 
 function jsonResponse(data: unknown, status = 200): Response {
@@ -79,13 +71,9 @@ function jsonResponse(data: unknown, status = 200): Response {
 
 async function handleGetBestResults(db: D1Database, mode: string): Promise<Response> {
   await ensureDB(db);
-  const { results } = await db.prepare('SELECT * FROM best_results WHERE mode = ? ORDER BY province, isp').bind(mode || 'ip').all();
-  return jsonResponse({ success: true, data: results });
-}
-
-async function handleGetRecentResults(db: D1Database): Promise<Response> {
-  await ensureDB(db);
-  const { results } = await db.prepare('SELECT * FROM speed_results ORDER BY created_at DESC LIMIT 100').all();
+  const { results } = await db.prepare(
+    "SELECT * FROM best_results WHERE mode = ? AND updated_at >= datetime('now', '-3 days') ORDER BY province, isp"
+  ).bind(mode || 'ip').all();
   return jsonResponse({ success: true, data: results });
 }
 
@@ -93,76 +81,41 @@ async function handleSubmitResult(db: D1Database, body: Record<string, unknown>)
   await ensureDB(db);
   const { province, isp, mode, domain, domain_name, download_speed, latency, ip_address } = body;
   const m = (mode as string) || 'ip';
+
   await db.prepare(
     'INSERT INTO speed_results (province, isp, mode, domain, domain_name, download_speed, latency, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-  ).bind(province as string, isp as string, m, domain as string, (domain_name as string) || '', (download_speed as number) || 0, (latency as number) || 0, (ip_address as string) || '').run();
+  ).bind(province, isp, m, domain, domain_name || '', download_speed || 0, latency || 0, ip_address || '').run();
+
   const existing = await db.prepare(
     'SELECT * FROM best_results WHERE province = ? AND isp = ? AND mode = ?'
-  ).bind(province as string, isp as string, m).first();
-  if (!existing || (download_speed && (download_speed as number) > (existing as Record<string, number>).download_speed)) {
+  ).bind(province, isp, m).first();
+
+  if (!existing || (download_speed && (download_speed as number) > (existing.download_speed as number))) {
     await db.prepare(
       "INSERT OR REPLACE INTO best_results (province, isp, mode, domain, domain_name, download_speed, latency, ip_address, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))"
-    ).bind(province as string, isp as string, m, domain as string, (domain_name as string) || '', (download_speed as number) || 0, (latency as number) || 0, (ip_address as string) || '').run();
+    ).bind(province, isp, m, domain, domain_name || '', download_speed || 0, latency || 0, ip_address || '').run();
   }
-  return jsonResponse({ success: true });
-}
 
-async function handleGetDomains(db: D1Database): Promise<Response> {
-  await ensureDB(db);
-  const { results } = await db.prepare('SELECT * FROM domains ORDER BY is_builtin DESC, id').all();
-  return jsonResponse({ success: true, data: results });
-}
-
-async function handleAddDomain(db: D1Database, body: { name: string; domain: string }): Promise<Response> {
-  await ensureDB(db);
-  const { name, domain } = body;
-  if (!domain) return jsonResponse({ success: false, error: 'domain is required' }, 400);
-  try {
-    await db.prepare('INSERT INTO domains (name, domain, is_builtin) VALUES (?, ?, 0)').bind(name || '', domain).run();
-    return jsonResponse({ success: true });
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes('UNIQUE')) return jsonResponse({ success: false, error: 'Domain already exists' }, 409);
-    throw e;
-  }
-}
-
-async function handleDeleteDomain(db: D1Database, domain: string): Promise<Response> {
-  await ensureDB(db);
-  if (!domain) return jsonResponse({ success: false, error: 'domain is required' }, 400);
-  await db.prepare('DELETE FROM domains WHERE domain = ?').bind(domain).run();
-  return jsonResponse({ success: true });
-}
-
-async function handleUpdateDomain(db: D1Database, domain: string, body: { name?: string; new_domain?: string }): Promise<Response> {
-  await ensureDB(db);
-  if (!domain) return jsonResponse({ success: false, error: 'domain is required' }, 400);
-  const { name, new_domain } = body;
-  if (!name && !new_domain) return jsonResponse({ success: false, error: 'name or new_domain is required' }, 400);
-  if (new_domain && new_domain !== domain) {
-    const existing = await db.prepare('SELECT id FROM domains WHERE domain = ?').bind(new_domain).first();
-    if (existing) return jsonResponse({ success: false, error: '目标域名已存在' }, 400);
-  }
-  const sets: string[] = [];
-  const params: string[] = [];
-  if (name) { sets.push('name = ?'); params.push(name); }
-  if (new_domain) { sets.push('domain = ?'); params.push(new_domain); }
-  params.push(domain);
-  await db.prepare(`UPDATE domains SET ${sets.join(', ')} WHERE domain = ?`).bind(...params).run();
   return jsonResponse({ success: true });
 }
 
 async function handleGetStats(db: D1Database): Promise<Response> {
   await ensureDB(db);
-  const { results: totalResults } = await db.prepare('SELECT COUNT(*) as cnt FROM speed_results').all();
-  const { results: provinceCount } = await db.prepare('SELECT COUNT(DISTINCT province) as cnt FROM best_results').all();
-  const { results: bestCount } = await db.prepare('SELECT COUNT(*) as cnt FROM best_results').all();
+  const { results: totalResults } = await db.prepare(
+    "SELECT COUNT(*) as cnt FROM speed_results WHERE created_at >= datetime('now', '-3 days')"
+  ).all();
+  const { results: provinceCount } = await db.prepare(
+    "SELECT COUNT(DISTINCT province) as cnt FROM best_results WHERE updated_at >= datetime('now', '-3 days')"
+  ).all();
+  const { results: bestCount } = await db.prepare(
+    "SELECT COUNT(*) as cnt FROM best_results WHERE updated_at >= datetime('now', '-3 days')"
+  ).all();
   return jsonResponse({
     success: true,
     data: {
-      total_results: (totalResults[0] as Record<string, number>)?.cnt || 0,
-      provinces_covered: (provinceCount[0] as Record<string, number>)?.cnt || 0,
-      best_records: (bestCount[0] as Record<string, number>)?.cnt || 0,
+      total_results: totalResults[0]?.cnt || 0,
+      provinces_covered: provinceCount[0]?.cnt || 0,
+      best_records: bestCount[0]?.cnt || 0,
     },
   });
 }
@@ -267,6 +220,8 @@ tbody tr:hover td{background:rgba(56,189,248,0.03)}
 .disclaimer p{font-size:12px;color:var(--text-secondary);line-height:1.7}
 .disclaimer .muted{color:var(--text-muted);font-size:11px;margin-top:6px}
 .empty{text-align:center;padding:40px 16px;color:var(--text-muted);font-size:13px}
+.domain-link{color:var(--cyan);text-decoration:none;word-break:break-all}
+.domain-link:hover{text-decoration:underline}
 @media(max-width:640px){
   .app{padding:12px 10px 32px}
   .header h1{font-size:20px}
@@ -295,10 +250,14 @@ tbody tr:hover td{background:rgba(56,189,248,0.03)}
   <div class="card-title">测速数据</div>
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab(this,'ipRec')">IP记录</button>
+    <button class="tab-btn" onclick="switchTab(this,'ipv6Rec')">IPV6记录</button>
     <button class="tab-btn" onclick="switchTab(this,'domainRec')">域名记录</button>
   </div>
   <div id="ipRecPanel" class="tab-panel active">
     <div id="ipRecContent"><div class="empty">加载中...</div></div>
+  </div>
+  <div id="ipv6RecPanel" class="tab-panel">
+    <div id="ipv6RecContent"><div class="empty">加载中...</div></div>
   </div>
   <div id="domainRecPanel" class="tab-panel">
     <div id="domainRecContent"><div class="empty">加载中...</div></div>
@@ -306,9 +265,9 @@ tbody tr:hover td{background:rgba(56,189,248,0.03)}
 </div>
 <div class="disclaimer">
   <div class="title">&#9888; 共享计划声明</div>
-  <p>本项目为共享测速计划，所有用户的测速结果将同步至共享数据库。</p>
-  <p>您的测速数据将被汇总展示，帮助其他用户选择最优域名。</p>
-  <p class="muted">如不同意数据共享，请删除本程序。</p>
+  <p>本项目为共享测速计划，</p>
+  <p>每个地区+运营商+模式只显示<strong>最近三天最快</strong>的一条记录。</p>
+  <p>超过三天的旧数据将自动清理。</p>
 </div>
 </div>
 <script>
@@ -325,7 +284,6 @@ const enToCn={
   'Nei Mongol':'内蒙古','Xizang':'西藏'
 };
 const ispNames={telecom:'电信',unicom:'联通',mobile:'移动',other:'其他'};
-const modeNames={ip:'IP测速',domain:'域名测速'};
 function translateProvince(name){
   if(!name||name==='未知')return'';
   if(enToCn[name])return enToCn[name];
@@ -333,11 +291,13 @@ function translateProvince(name){
   return name;
 }
 let ipRecData=[];
+let ipv6RecData=[];
 let domainRecData=[];
 function switchTab(btn,tab){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('ipRecPanel').classList.toggle('active',tab==='ipRec');
+  document.getElementById('ipv6RecPanel').classList.toggle('active',tab==='ipv6Rec');
   document.getElementById('domainRecPanel').classList.toggle('active',tab==='domainRec');
 }
 async function fetchStats(){
@@ -353,13 +313,16 @@ async function fetchStats(){
 }
 async function fetchRecords(){
   try{
-    const[r1,r2]=await Promise.all([
+    const[r1,r2,r3]=await Promise.all([
       fetch('/api/results/best?mode=ip').then(r=>r.json()),
+      fetch('/api/results/best?mode=ipv6').then(r=>r.json()),
       fetch('/api/results/best?mode=domain').then(r=>r.json())
     ]);
     if(r1.success)ipRecData=r1.data;
-    if(r2.success)domainRecData=r2.data;
+    if(r2.success)ipv6RecData=r2.data;
+    if(r3.success)domainRecData=r3.data;
     renderRecordTable(ipRecData,'ipRecContent');
+    renderRecordTable(ipv6RecData,'ipv6RecContent');
     renderRecordTable(domainRecData,'domainRecContent');
   }catch(e){console.error(e)}
 }
@@ -380,7 +343,7 @@ function renderRecordTable(data,elementId){
     const getCell=(isp)=>{
       const r=d[isp];
       if(!r)return'<span style="color:var(--text-muted)">-</span>';
-      let cell='<span class="isp-'+isp+'">'+(r.domain_name||r.domain)+'</span>';
+      let cell='<a href="https://'+r.domain+'" target="_blank" class="domain-link">'+r.domain+'</a>';
       if(r.ip_address)cell+='<div class="ip-val">'+r.ip_address+'</div>';
       cell+='<div class="speed-val">'+r.download_speed.toFixed(2)+' MB/s &middot; '+r.latency.toFixed(0)+'ms</div>';
       return cell;
@@ -419,37 +382,13 @@ export default {
         return handleGetBestResults(env.DB, mode);
       }
 
-      if (pathname === '/api/results/recent' && method === 'GET') {
-        return handleGetRecentResults(env.DB);
-      }
-
       if (pathname === '/api/results' && method === 'POST') {
         const body = await request.json() as Record<string, unknown>;
         return handleSubmitResult(env.DB, body);
       }
 
-      if (pathname === '/api/domains' && method === 'GET') {
-        return handleGetDomains(env.DB);
-      }
-
-      if (pathname === '/api/domains' && method === 'POST') {
-        const body = await request.json() as { name: string; domain: string };
-        return handleAddDomain(env.DB, body);
-      }
-
-      if (pathname.startsWith('/api/domains/') && method === 'DELETE') {
-        const domain = decodeURIComponent(pathname.slice('/api/domains/'.length));
-        return handleDeleteDomain(env.DB, domain);
-      }
-
-      if (pathname.startsWith('/api/domains/') && method === 'PUT') {
-        const domain = decodeURIComponent(pathname.slice('/api/domains/'.length));
-        const putBody = await request.json() as { name?: string; new_domain?: string };
-        return handleUpdateDomain(env.DB, domain, putBody);
-      }
-
       return jsonResponse({ success: false, error: 'Not found' }, 404);
-    } catch (e: unknown) {
+    } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       return jsonResponse({ success: false, error: msg }, 500);
     }

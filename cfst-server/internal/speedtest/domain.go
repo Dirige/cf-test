@@ -181,38 +181,42 @@ func TestIPMode(ctx context.Context, domains []DomainItem, cfg TestConfig) []IPR
 	}
 	wg.Wait()
 
-	// 分离IPv4和IPv6
-	var ipv4Results, ipv6Results []pingResult
+	// 按域名分组，每个域名选取5个低延迟IP
+	domainGroups := make(map[string][]pingResult)
 	for _, r := range pingResults {
-		if r.isIPv6 {
-			ipv6Results = append(ipv6Results, r)
-		} else {
-			ipv4Results = append(ipv4Results, r)
+		domainGroups[r.domain] = append(domainGroups[r.domain], r)
+	}
+
+	perDomainN := 5
+	var topIPv4, topIPv6 []pingResult
+	for domain, group := range domainGroups {
+		var dv4, dv6 []pingResult
+		for _, r := range group {
+			if r.isIPv6 {
+				dv6 = append(dv6, r)
+			} else {
+				dv4 = append(dv4, r)
+			}
 		}
+		sort.Slice(dv4, func(i, j int) bool { return dv4[i].latency < dv4[j].latency })
+		sort.Slice(dv6, func(i, j int) bool { return dv6[i].latency < dv6[j].latency })
+
+		n4 := perDomainN
+		if len(dv4) < n4 {
+			n4 = len(dv4)
+		}
+		topIPv4 = append(topIPv4, dv4[:n4]...)
+
+		n6 := perDomainN
+		if len(dv6) < n6 {
+			n6 = len(dv6)
+		}
+		topIPv6 = append(topIPv6, dv6[:n6]...)
+
+		log.Printf("[方案一-IP测速] %s 选出 %d IPv4, %d IPv6", domain, n4, n6)
 	}
 
-	// 按延迟排序
-	sort.Slice(ipv4Results, func(i, j int) bool {
-		return ipv4Results[i].latency < ipv4Results[j].latency
-	})
-	sort.Slice(ipv6Results, func(i, j int) bool {
-		return ipv6Results[i].latency < ipv6Results[j].latency
-	})
-
-	// 选出前N个低延迟IP
-	topN := cfg.LatencyTopN
-	if len(ipv4Results) < topN {
-		topN = len(ipv4Results)
-	}
-	topIPv4 := ipv4Results[:topN]
-
-	topN = cfg.LatencyTopN
-	if len(ipv6Results) < topN {
-		topN = len(ipv6Results)
-	}
-	topIPv6 := ipv6Results[:topN]
-
-	log.Printf("[方案一-IP测速] 选出 %d 个低延迟IPv4, %d 个低延迟IPv6", len(topIPv4), len(topIPv6))
+	log.Printf("[方案一-IP测速] 共选出 %d 个低延迟IPv4, %d 个低延迟IPv6", len(topIPv4), len(topIPv6))
 
 	// 第三步：写入ip.txt和ipv6.txt
 	workDir := filepath.Dir(cfg.CfstPath)
@@ -373,46 +377,52 @@ func testSingleDomain(domain DomainItem, cfg TestConfig, index int) DomainResult
 
 	var allTestedIPs []TestedIP
 
-	for _, isIPv6 := range []bool{false, true} {
-		var filtered []string
-		for _, ip := range ips {
-			if (strings.Contains(ip, ":")) == isIPv6 {
-				filtered = append(filtered, ip)
-			}
+	var ipv4Only []string
+	for _, ip := range ips {
+		if !strings.Contains(ip, ":") {
+			ipv4Only = append(ipv4Only, ip)
 		}
-		if len(filtered) == 0 {
-			continue
+	}
+	if len(ipv4Only) == 0 {
+		return DomainResult{
+			Domain:     domain.Domain,
+			DomainName: domain.Name,
+			Success:    false,
+			Error:      "无可用IPv4地址",
 		}
+	}
 
-		suffix := "v4"
-		if isIPv6 {
-			suffix = "v6"
-		}
-		tmpFile := filepath.Join(workDir, fmt.Sprintf("ip_%d_%s.txt", index, suffix))
-		resultFile := filepath.Join(workDir, fmt.Sprintf("ip_%d_%s_result.csv", index, suffix))
+	tmpFile := filepath.Join(workDir, fmt.Sprintf("ip_%d_v4.txt", index))
+	resultFile := filepath.Join(workDir, fmt.Sprintf("ip_%d_v4_result.csv", index))
+	defer os.Remove(tmpFile)
+	defer os.Remove(resultFile)
 
-		if err := os.WriteFile(tmpFile, []byte(strings.Join(filtered, "\n")), 0644); err != nil {
-			log.Printf("[方案二-域名测速] %s 写入临时文件失败: %v", domain.Domain, err)
-			continue
+	if err := os.WriteFile(tmpFile, []byte(strings.Join(ipv4Only, "\n")), 0644); err != nil {
+		return DomainResult{
+			Domain:     domain.Domain,
+			DomainName: domain.Name,
+			Success:    false,
+			Error:      fmt.Sprintf("写入临时文件失败: %v", err),
 		}
-		defer os.Remove(tmpFile)
-		defer os.Remove(resultFile)
+	}
 
-		results, err := runCfst(cfg.CfstPath, tmpFile, cfg.SpeedCount, cfg.SpeedLimit)
-		if err != nil {
-			log.Printf("[方案二-域名测速] %s (%s) 测速失败: %v", domain.Name, domain.Domain, err)
-			continue
+	results, err := runCfst(cfg.CfstPath, tmpFile, cfg.SpeedCount, cfg.SpeedLimit)
+	if err != nil {
+		return DomainResult{
+			Domain:     domain.Domain,
+			DomainName: domain.Name,
+			Success:    false,
+			Error:      fmt.Sprintf("IPv4测速失败: %v", err),
 		}
+	}
 
-		for _, r := range results {
-			r.IsIPv6 = isIPv6
-			allTestedIPs = append(allTestedIPs, TestedIP{
-				IP:            r.IP,
-				DownloadSpeed: r.DownloadSpeed,
-				Latency:       r.Latency,
-				IsIPv6:        isIPv6,
-			})
-		}
+	for _, r := range results {
+		allTestedIPs = append(allTestedIPs, TestedIP{
+			IP:            r.IP,
+			DownloadSpeed: r.DownloadSpeed,
+			Latency:       r.Latency,
+			IsIPv6:        false,
+		})
 	}
 
 	if len(allTestedIPs) == 0 {
@@ -454,7 +464,7 @@ func testSingleDomain(domain DomainItem, cfg TestConfig, index int) DomainResult
 		DownloadSpeed: avgSpeed,
 		Latency:       avgLatency,
 		Success:       true,
-		IsIPv6:        best.IsIPv6,
+		IsIPv6:        false,
 		TestedIPs:     topIPs,
 	}
 }
