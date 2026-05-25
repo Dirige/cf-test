@@ -1,0 +1,24 @@
+Cloudflare Speed Test Server - 使用说明
+==========================================
+
+1. 首次使用：
+   - 双击"启动服务.bat"运行服务器
+   - 或者直接运行 cfst-server.exe -c config.yaml
+
+2. 配置说明：
+   - 编辑 config.yaml 文件进行配置
+   - 必须配置 dns.zone_id 和 dns.api_token
+   - 其他参数可根据需要调整
+
+3. 访问界面：
+   - 启动后访问 http://localhost:8080
+   - 在Web界面中可以进行域名测速
+
+4. 停止服务：
+   - 在命令行窗口按 Ctrl+C
+   - 或者直接关闭命令行窗口
+
+5. 注意事项：
+   - 确保已安装 CloudflareSpeedTest 工具
+   - 配置文件中的域名需要是有效的优选域名
+   - 首次运行会自动创建必要的目录结构

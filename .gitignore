@@ -43,5 +43,9 @@ go.sum
 # CloudflareSpeedTest-master (original project reference)
 CloudflareSpeedTest-master/
 
+# Build artifacts
+*.zip
+*.tar.gz
+
 # Trae IDE
 .trae/
