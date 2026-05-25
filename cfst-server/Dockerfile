@@ -28,22 +28,19 @@ RUN \
     tar -xzf /tmp/cfst_arm64.tar.gz -C /app && \
     chmod +x /app/cfst && \
     mv /app/cfst /app/cfst_arm64 && \
-    rm -f /tmp/cfst_arm64.tar.gz
+    rm -f /tmp/cfst_arm64.tar.gz && \
+    echo '#!/bin/sh' > /entrypoint.sh && \
+    echo 'ARCH=$(uname -m)' >> /entrypoint.sh && \
+    echo 'if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then' >> /entrypoint.sh && \
+    echo '    CFST_PATH="./cfst_arm64"' >> /entrypoint.sh && \
+    echo 'else' >> /entrypoint.sh && \
+    echo '    CFST_PATH="./cfst_amd64"' >> /entrypoint.sh && \
+    echo 'fi' >> /entrypoint.sh && \
+    echo 'sed -i "s|cfst_path: \".*\"|cfst_path: \"$CFST_PATH\"|" /app/config.yaml' >> /entrypoint.sh && \
+    echo 'exec ./cfst-server -c /app/config.yaml' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
 
 EXPOSE 8080
-
-COPY <<EOF /entrypoint.sh
-#!/bin/sh
-ARCH=\$(uname -m)
-if [ "\$ARCH" = "aarch64" ] || [ "\$ARCH" = "arm64" ]; then
-    CFST_PATH="./cfst_arm64"
-else
-    CFST_PATH="./cfst_amd64"
-fi
-sed -i "s|cfst_path: \".*\"|cfst_path: \"\$CFST_PATH\"|" /app/config.yaml
-exec ./cfst-server -c /app/config.yaml
-EOF
-RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD []
